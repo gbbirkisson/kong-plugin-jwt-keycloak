@@ -17,7 +17,8 @@ class TestConsumerMapping(unittest.TestCase):
 
     @create_api({
         'allow_all_iss': True,
-        'consumer_match': True
+        'consumer_match': True,
+        'consumer_match_claim_custom_id': True
     })
     @authenticate(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
     @call_api()

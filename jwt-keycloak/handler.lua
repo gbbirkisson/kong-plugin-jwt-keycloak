@@ -96,12 +96,20 @@ local function match_public_key(iss)
     return false, public_key
 end
 
-local function load_consumer(consumer_id)
-    --local result, err = singletons.dao.consumers:find { custom_id = consumer_id }
-    local result, _, err = singletons.db.consumers:select_by_custom_id(consumer_id)
+local function load_consumer_by_id(consumer_id)
+    local result, err = singletons.db.consumers:select { id = consumer_id }
 
     if not result then
         return nil, 'Consumer "' .. consumer_id .. '" not found'
+    end
+    return result
+end
+
+local function load_consumer_by_custom_id(jwt, conf)
+    local result, _, err = singletons.db.consumers:select_by_custom_id(jwt.claims[conf.consumer_match_claim])
+
+    if not result then
+        return nil, 'Consumer "' .. custom_id .. '" not found'
     end
     return result
 end
@@ -116,11 +124,10 @@ local function set_consumer(consumer, token)
 end
 
 local function match_consumer(jwt, conf)
-
     local consumer_id = jwt.claims[conf.consumer_match_claim]
-    local consumer_cache_key = "consumer_cache_" .. consumer_id
-    --local consumer_cache_key = singletons.db.consumers:cache_key(consumer_id)
-    local consumer, err = singletons.cache:get(consumer_cache_key, nil, load_consumer, consumer_id)
+    local consumer_cache_key = consumer_id
+
+    local consumer, err = singletons.cache:get(consumer_cache_key, nil, load_consumer_by_id, consumer_id)
     if err then
         return false, err
     end
@@ -209,7 +216,14 @@ local function verify_token(conf)
 
     -- Match consumer
     if conf.consumer_match then
-        local consumer_found, err = match_consumer(jwt, conf)
+        local consumer_found, err
+        if conf.consumer_match_claim_custom_id then
+            -- This call is not cached
+            consumer_found, err = load_consumer_by_custom_id(jwt, conf)
+        else
+            -- This call is cached
+            consumer_found, err = match_consumer(jwt, conf)
+        end
         if not consumer_found and not conf.consumer_match_ignore_not_found then
             return false, { status = 401, message = "Unable to find consumer for token" }
         end

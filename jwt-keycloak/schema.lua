@@ -24,6 +24,7 @@ return {
     client_roles = {type = "array", default = nil},
     consumer_match = {type = "boolean", default=false},
     consumer_match_claim = {type = "string", default="azp"},
+    consumer_match_claim_custom_id = {type = "boolean", default = false},
     consumer_match_ignore_not_found = {type = "boolean", default=false}
   },
   self_check = function(schema, plugin_t, dao, is_update)

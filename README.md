@@ -115,8 +115,9 @@ curl -X POST http://localhost:8001/plugins \
 | config.roles                              | no        |           | A list of roles of current client the token must have to access the api, i.e. `["uma_protection"]`. The token only has to have one of the listed roles to be authorized. |
 | config.realm_roles                        | no        |           | A list of realm roles the token must have to access the api, i.e. `["offline_access"]`. The token only has to have one of the listed roles to be authorized. |
 | config.client_roles                       | no        |           | A list of roles of different client the token must have to access the api, i.e. `["account:manage-account"]`. The format for each entry should be `<CLIENT_NAME>:<ROLE_NAME>`. The token only has to have one of the listed roles to be authorized. |
-| config.consumer_match                     | no        | `false`   | A boolean value that indicates if the plugin should find a kong consumer with `custom_id` that equals the `consumer_match_claim` claim in the access token. |
-| config.consumer_match_claim               | no        | `azp`     | The claim name in the token that the plugin will try to match the kong `custom_id` against. |
+| config.consumer_match                     | no        | `false`   | A boolean value that indicates if the plugin should find a kong consumer with `id`/`custom_id` that equals the `consumer_match_claim` claim in the access token. |
+| config.consumer_match_claim               | no        | `azp`     | The claim name in the token that the plugin will try to match the kong `id`/`custom_id` against. |
+| config.consumer_match_claim_custom_id     | no        | `false`   | A boolean value that indicates if the plugin should match the `consumer_match_claim` claim against the consumers `id` or `custom_id`. By default it matches the consumer against the `id`. **When matching against `custom_id` consumers are not cached**. |
 | config.consumer_match_ignore_not_found    | no        | `false`   | A boolean value that indicates if the request should be let through regardless if the plugin is able to match the request to a kong consumer or not. |
 
 ### Example
