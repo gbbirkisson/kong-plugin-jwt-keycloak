@@ -19,7 +19,7 @@ class TestBasics(unittest.TestCase):
     @call_api()
     def test_no_auth(self, status, body):
         self.assertEqual(UNAUTHORIZED, status)
-        self.assertEqual('Missing access token', body.get('message'))
+        self.assertEqual('Unauthorized', body.get('message'))
 
     @create_api({
         'allow_all_iss': True
@@ -27,7 +27,7 @@ class TestBasics(unittest.TestCase):
     @call_api()
     def test_preflight_rainy(self, status, body):
         self.assertEqual(UNAUTHORIZED, status)
-        self.assertEqual('Missing access token', body.get('message'))
+        self.assertEqual('Unauthorized', body.get('message'))
 
     @create_api({
         'run_on_preflight': False,
@@ -50,8 +50,8 @@ class TestBasics(unittest.TestCase):
     })
     @call_api(token=STANDARD_JWT)
     def test_invalid_algorithm(self, status, body):
-        self.assertEqual(UNAUTHORIZED, status)
-        self.assertEqual('Invalid token algorithm', body.get('message'))
+        self.assertEqual(FORBIDDEN, status)
+        self.assertEqual('Invalid algorithm', body.get('message'))
 
     @create_api({
         'allow_all_iss': True
@@ -66,7 +66,7 @@ class TestBasics(unittest.TestCase):
     })
     @call_api(token=NOT_FOUND_JWT)
     def test_invalid_iss(self, status, body):
-        self.assertEqual(UNAUTHORIZED, status)
+        self.assertEqual(FORBIDDEN, status)
         self.assertEqual('Unable to get public key for issuer', body.get('message'))
 
     @create_api({
@@ -75,13 +75,8 @@ class TestBasics(unittest.TestCase):
     })
     @call_api(token=LONG_LASTING)
     def test_max_exp(self, status, body):
-        v = get_kong_version()
-        if v >= '0.14.0':
-            # Only works for Kong >= 0.14
-            self.assertEqual(UNAUTHORIZED, status)
-            self.assertEqual('Token claims invalid: ["exp"]="exceeds maximum allowed expiration"', body.get('message'))
-        else:
-            self.skipTest('Not supported for this kong version')
+        self.assertEqual(FORBIDDEN, status)
+        self.assertEqual('Token claims invalid: ["exp"]="exceeds maximum allowed expiration"', body.get('message'))
 
     @create_api({
         'allow_all_iss': True

@@ -48,4 +48,4 @@ class TestIssuers(unittest.TestCase):
     @call_api()
     def test_allow_all_iss_rainy(self, status, body):
         self.assertEqual(UNAUTHORIZED, status)
-        self.assertEqual('Token issuer not allowed for this api', body.get('message'))
+        self.assertEqual('Token issuer not allowed', body.get('message'))

@@ -1,4 +1,4 @@
-KEYCLOAK_IMAGE:=jboss/keycloak:4.4.0.Final
+KEYCLOAK_IMAGE:=jboss/keycloak:4.8.3.Final
 KEYCLOAK_CONTAINER_NAME:=kc_local
 KEYCLOAK_PORT:=8080
 KEYCLOAK_ADMIN_USER:=admin

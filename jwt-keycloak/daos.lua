@@ -1,13 +1,16 @@
-local SCHEMA = {
-  primary_key = {"id"},
-  table = "jwt_keycloak_public_keys",
-  cache_key = { "iss" },
-  fields = {
-    id = {type = "id", dao_insert_value = true},
-    created_at = {type = "timestamp", immutable = true, dao_insert_value = true},
-    iss = {type = "string", required = true, unique = true },
-    public_key = {type = "string", required = true, trim_whitespace = false}
-  },
-}
+local typedefs = require "kong.db.schema.typedefs"
 
-return {jwt_keycloak_public_keys = SCHEMA}
+return {
+    jwt_keycloak_public_keys = {
+        name = "jwt_keycloak_public_keys",
+        primary_key = { "id" },
+        cache_key = { "iss" },
+        endpoint_key = "id",
+        fields = {
+            { id = typedefs.uuid },
+            { created_at = typedefs.auto_timestamp_s },
+            { iss = { type = "string", required = true, unique = true }, },
+            { public_key = { type = "string", required = true, unique = true }, },
+        },
+    },
+}

@@ -6,9 +6,6 @@ from tests.utils import *
 class TestConsumerMapping(unittest.TestCase):
 
     def setUp(self):
-        v = get_kong_version()
-        if v < '0.14.0':
-            self.skipTest('Not supported for kong version below 0.14')
         ensure_plugin()
         create_consumer(CLIENT_ID)
 

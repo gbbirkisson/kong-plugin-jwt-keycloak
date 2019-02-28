@@ -52,7 +52,7 @@ def create_consumer(client_id):
         "username": client_id,
         "custom_id": client_id
     })
-    assert r.status_code == CREATED
+    assert r.status_code == CREATED or r.status_code == 409
     time.sleep(0.5)
 
 
@@ -66,13 +66,17 @@ def create_api(config, expected_response=CREATED):
     def real_decorator(func):
         def wrapper(*args, **kwargs):
             api_name = "test" + str(random.randint(1, 1000000))
-            r = requests.post(KONG_ADMIN + "/apis", data={
-                "name": api_name,
-                "uris": "/" + api_name,
-                "upstream_url": "http://mockbin.org/headers"
+            r = requests.post(KONG_ADMIN + "/services", data={
+                 "name": api_name,
+                 "url": "http://mockbin.org/headers"
             })
             assert r.status_code == CREATED
-            r = requests.post(KONG_ADMIN + "/apis/" + api_name + "/plugins", json={
+            r = requests.post(KONG_ADMIN + "/services/" + api_name + "/routes", data={
+                "name": api_name,
+                "paths[]": "/" + api_name
+            })
+            assert r.status_code == CREATED
+            r = requests.post(KONG_ADMIN + "/services/" + api_name + "/plugins", json={
                 "name": "jwt-keycloak",
                 "config": config
             })

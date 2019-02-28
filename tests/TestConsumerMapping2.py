@@ -5,8 +5,8 @@ from tests.utils import *
 
 class TestConsumerMapping2(unittest.TestCase):
 
-    MY_CLIENT_ID = "2fc355a4-ee75-4acf-8461-8af8d7ab69e1"
-    MY_CLIENT_SECRET = "ef39aeab-c31c-4192-bc42-af6603149929"
+    MY_CLIENT_ID = "b6149525-b0b8-4be5-968e-87bad09e0ce5"
+    MY_CLIENT_SECRET = "f6fc642e-1d85-4992-95af-ed0be5da2d9b"
 
     @create_api({
         'allow_all_iss': True,
@@ -18,7 +18,9 @@ class TestConsumerMapping2(unittest.TestCase):
         '''
         To run make this pass, you have to first create a consumer, then create a client in keycloak with the same id,
         and then run that test with those client credentials
+
+        http POST http://localhost:8001/consumers/ username=tester
+
         '''
-        self.skipTest("Manual steps required !!")
         self.assertEqual(OK, status)
         self.assertEqual([self.MY_CLIENT_ID], [h['value'] for h in body.get('headers') if h['name'] == 'x-consumer-id'])

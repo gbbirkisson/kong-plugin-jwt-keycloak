@@ -7,7 +7,7 @@ KONG_DB_PORT:=5432
 KONG_DB_USER:=kong
 KONG_DB_PASS:=kong
 KONG_DB_NAME:=kong
-KONG_DATABASE:=postgres
+KONG_DATABASE?=postgres
 
 wait-for-log:
 	@while ! docker logs ${CONTAINER} | grep -q "${PATTERN}"; do sleep 5; done
@@ -43,7 +43,7 @@ kong-db-migrate: build
 		-e "KONG_PG_USER=${KONG_DB_USER}" \
 		-e "KONG_PG_PASSWORD=${KONG_DB_PASS}" \
 		-e "KONG_PG_DATABASE=${KONG_DB_NAME}" \
-		${FULL_IMAGE_NAME} kong migrations up --vv
+		${FULL_IMAGE_NAME} kong migrations bootstrap --vv
 
 kong-db-start: kong-db-create kong-db-migrate
 
@@ -53,7 +53,7 @@ kong-db-stop:
 
 kong-start: build
 	@echo "Creating kong..."
-	@docker run -d --rm \
+	@docker run -it --rm \
 		--name ${KONG_CONTAINER_NAME} \
 		--link=${KONG_DB_CONTAINER_NAME}:db \
 		-p ${KONG_PORT}:8000 \

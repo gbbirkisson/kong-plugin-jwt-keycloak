@@ -1,16 +1,13 @@
 local BasePlugin = require "kong.plugins.base_plugin"
-local responses = require "kong.tools.responses"
-local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
-local singletons = require "kong.singletons"
 local constants = require "kong.constants"
+local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
 
-local ngx_re_gmatch = ngx.re.gmatch
-local get_method = ngx.req.get_method
-local ngx_set_header = ngx.req.set_header
+local re_gmatch = ngx.re.gmatch
 
 local JwtKeycloakHandler = BasePlugin:extend()
 
 JwtKeycloakHandler.PRIORITY = 1005
+JwtKeycloakHandler.VERSION = "1.0.0"
 
 function table_to_string(tbl)
     local result = ""
@@ -37,153 +34,166 @@ function table_to_string(tbl)
     return result
 end
 
-local function retrieve_token(request, conf)
-  local uri_parameters = request.get_uri_args()
-
-  for _, v in ipairs(conf.uri_param_names) do
-    if uri_parameters[v] then
-      return uri_parameters[v]
-    end
-  end
-
-  local ngx_var = ngx.var
-  for _, v in ipairs(conf.cookie_names) do
-    local jwt_cookie = ngx_var["cookie_" .. v]
-    if jwt_cookie and jwt_cookie ~= "" then
-      return jwt_cookie
-    end
-  end
-
-  local authorization_header = request.get_headers()["authorization"]
-  if authorization_header then
-    local iterator, iter_err = ngx_re_gmatch(authorization_header, "\\s*[Bb]earer\\s+(.+)")
-    if not iterator then
-      return nil, iter_err
+--- Retrieve a JWT in a request.
+-- Checks for the JWT in URI parameters, then in cookies, and finally
+-- in the `Authorization` header.
+-- @param request ngx request object
+-- @param conf Plugin configuration
+-- @return token JWT token contained in request (can be a table) or nil
+-- @return err
+local function retrieve_token(conf)
+    local args = kong.request.get_query()
+    for _, v in ipairs(conf.uri_param_names) do
+        if args[v] then
+            return args[v]
+        end
     end
 
-    local m, err = iterator()
-    if err then
-      return nil, err
+    local var = ngx.var
+    for _, v in ipairs(conf.cookie_names) do
+        local cookie = var["cookie_" .. v]
+        if cookie and cookie ~= "" then
+            return cookie
+        end
     end
 
-    if m and #m > 0 then
-      return m[1]
+    local authorization_header = kong.request.get_header("authorization")
+    if authorization_header then
+        local iterator, iter_err = re_gmatch(authorization_header, "\\s*[Bb]earer\\s+(.+)")
+        if not iterator then
+            return nil, iter_err
+        end
+
+        local m, err = iterator()
+        if err then
+            return nil, err
+        end
+
+        if m and #m > 0 then
+            return m[1]
+        end
     end
-  end
+end
+
+function JwtKeycloakHandler:new()
+    JwtKeycloakHandler.super.new(self, "jwt-keycloak")
 end
 
 local function load_public_key(iss)
-    local pk, err = singletons.dao.jwt_keycloak_public_keys:find_all { iss = iss }
-
+    local row, err = kong.db.jwt_keycloak_public_keys:select_by_iss(iss)
     if err then
         return nil, err
     end
 
-    return jwt_decoder:b64_decode(pk[1].public_key)
-end
-
-local function match_public_key(iss)
-    local iss_cache_key = "iss_cache_" .. iss
-    local public_key, err = singletons.cache:get(iss_cache_key, nil, load_public_key, iss, true)
-    if err then
-        return err
+    if not row then
+        return nil, nil
     end
 
-    if not public_key then
-        return string_format("Could not find public key for 'iss=%s'", iss)
-    end
-
-    return false, public_key
+    return jwt_decoder:base64_decode(row.public_key)
 end
 
-local function load_consumer_by_id(consumer_id)
-    local result, err = singletons.db.consumers:select { id = consumer_id }
-
+local function load_consumer(consumer_id, anonymous)
+    local result, err = kong.db.consumers:select { id = consumer_id }
     if not result then
-        return nil, 'Consumer "' .. consumer_id .. '" not found'
+        if anonymous and not err then
+            err = 'anonymous consumer "' .. consumer_id .. '" not found'
+        end
+        return nil, err
     end
     return result
 end
 
-local function load_consumer_by_custom_id(jwt, conf)
-    local result, _, err = singletons.db.consumers:select_by_custom_id(jwt.claims[conf.consumer_match_claim])
-
+local function load_consumer_by_custom_id(custom_id)
+    local result, err = kong.db.consumers:select_by_custom_id(custom_id)
     if not result then
-        return nil, 'Consumer "' .. custom_id .. '" not found'
+        return nil, err
     end
     return result
 end
 
-local function set_consumer(consumer, token)
-    ngx_set_header(constants.HEADERS.CONSUMER_ID, consumer.id)
-    ngx_set_header(constants.HEADERS.CONSUMER_CUSTOM_ID, consumer.custom_id)
-    ngx_set_header(constants.HEADERS.CONSUMER_USERNAME, consumer.username)
-    ngx.ctx.authenticated_consumer = consumer
-    ngx.ctx.authenticated_jwt_token = token
-    ngx_set_header(constants.HEADERS.ANONYMOUS, nil) -- in case of auth plugins concatenation
+local function set_consumer(consumer, credential, token)
+    local set_header = kong.service.request.set_header
+    local clear_header = kong.service.request.clear_header
+
+    if consumer and consumer.id then
+        set_header(constants.HEADERS.CONSUMER_ID, consumer.id)
+    else
+        clear_header(constants.HEADERS.CONSUMER_ID)
+    end
+
+    if consumer and consumer.custom_id then
+        set_header(constants.HEADERS.CONSUMER_CUSTOM_ID, consumer.custom_id)
+    else
+        clear_header(constants.HEADERS.CONSUMER_CUSTOM_ID)
+    end
+
+    if consumer and consumer.username then
+        set_header(constants.HEADERS.CONSUMER_USERNAME, consumer.username)
+    else
+        clear_header(constants.HEADERS.CONSUMER_USERNAME)
+    end
+
+    kong.client.authenticate(consumer, credential)
+
+    if credential then
+        kong.ctx.shared.authenticated_jwt_token = token -- TODO: wrap in a PDK function?
+        ngx.ctx.authenticated_jwt_token = token  -- backward compatibilty only
+
+        if credential.username then
+            set_header(constants.HEADERS.CREDENTIAL_USERNAME, credential.username)
+        else
+            clear_header(constants.HEADERS.CREDENTIAL_USERNAME)
+        end
+
+        clear_header(constants.HEADERS.ANONYMOUS)
+
+    else
+        clear_header(constants.HEADERS.CREDENTIAL_USERNAME)
+        set_header(constants.HEADERS.ANONYMOUS, true)
+    end
 end
 
-local function match_consumer(jwt, conf)
-    local consumer_id = jwt.claims[conf.consumer_match_claim]
-    local consumer_cache_key = consumer_id
-
-    local consumer, err = singletons.cache:get(consumer_cache_key, nil, load_consumer_by_id, consumer_id)
+local function do_authentication(conf)
+    -- Retrieve token
+    local token, err = retrieve_token(conf)
     if err then
-        return false, err
+        kong.log.err(err)
+        return kong.response.exit(500, { message = "An unexpected error occurred" })
     end
 
-    if not consumer then
-        return false, string_format("Could not find consumer for '%s=%s'", conf.consumer_match_claim, consumer_id)
-    end
-
-    return consumer
-end
-
-local function verify_token(conf)
-    -- DONE
-    local token, err = retrieve_token(ngx.req, conf)
-    if err then
-        return responses.send_HTTP_INTERNAL_SERVER_ERROR(err)
-    end
-
-    -- DONE
-    local ttype = type(token)
-    if ttype ~= "string" then
-        if ttype == "nil" then
-            return false, { status = 401, message = "Missing access token" }
-        elseif ttype == "table" then
+    local token_type = type(token)
+    if token_type ~= "string" then
+        if token_type == "nil" then
+            return false, { status = 401, message = "Unauthorized" }
+        elseif token_type == "table" then
             return false, { status = 401, message = "Multiple tokens provided" }
         else
             return false, { status = 401, message = "Unrecognizable token" }
         end
     end
 
-    -- DONE
+    -- Decode token
     local jwt, err = jwt_decoder:new(token)
     if err then
         return false, { status = 401, message = "Bad token; " .. tostring(err) }
     end
 
-    -- DONE
-    -- Verify "alg"
-    local algorithm = conf.algorithm or "HS256"
-    if jwt.header.alg ~= algorithm then
-        return false, { status = 401, message = "Invalid token algorithm" }
+    -- Verify algorithim
+    if jwt.header.alg ~= (conf.algorithm or "HS256") then
+        return false, {status = 403, message = "Invalid algorithm"}
     end
 
-    -- DONE
     -- Verify the JWT registered claims
     local ok_claims, errors = jwt:verify_registered_claims(conf.claims_to_verify)
     if not ok_claims then
         return false, { status = 401, message = "Token claims invalid: " .. table_to_string(errors) }
     end
 
-    -- DONE
-    -- Verify the JWT registered claims
+    -- Verify maximum expiration
     if conf.maximum_expiration ~= nil and conf.maximum_expiration > 0 then
         local ok, errors = jwt:check_maximum_expiration(conf.maximum_expiration)
         if not ok then
-            return false, { status = 401, message = "Token claims invalid: " .. table_to_string(errors) }
+            return false, { status = 403, message = "Token claims invalid: " .. table_to_string(errors) }
         end
     end
 
@@ -198,38 +208,53 @@ local function verify_token(conf)
     end
 
     if not conf.allow_all_iss and not iss_allowed then
-        return false, { status = 401, message = "Token issuer not allowed for this api" }
+        return false, { status = 401, message = "Token issuer not allowed" }
     end
 
-    -- DONE
-    local err, public_key = match_public_key(jwt.claims.iss)
+    -- Retrieve public key
+    local public_key_cache_key = kong.db.jwt_keycloak_public_keys:cache_key(jwt.claims.iss)
+    local public_key, err = kong.cache:get(public_key_cache_key, nil, load_public_key, jwt.claims.iss, true)
 
     if err then
-        return false, { status = 401, message = "Unable to get public key for issuer" }
+        kong.log.err(err)
+        return kong.response.exit(500, { message = "An unexpected error occurred" })
     end
 
-    -- DONE
+    if not public_key then
+        return kong.response.exit(403, { message = "Unable to get public key for issuer" })
+    end
+
     -- Verify signature
     if not jwt:verify_signature(public_key) then
-        return false, { status = 401, message = "Invalid token signature" }
+        return false
     end
 
     -- Match consumer
     if conf.consumer_match then
-        local consumer_found, err
+        local consumer, err
+        local consumer_id = jwt.claims[conf.consumer_match_claim]
+
         if conf.consumer_match_claim_custom_id then
             -- This call is not cached
-            consumer_found, err = load_consumer_by_custom_id(jwt, conf)
+            consumer, err = load_consumer_by_custom_id(consumer_id)
         else
             -- This call is cached
-            consumer_found, err = match_consumer(jwt, conf)
+            consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
+            consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer, consumer_id, true)
         end
-        if not consumer_found and not conf.consumer_match_ignore_not_found then
+
+        if err then
+            kong.log.err(err)
+        end
+
+        if not consumer and not conf.consumer_match_ignore_not_found then
             return false, { status = 401, message = "Unable to find consumer for token" }
         end
-        if consumer_found then
-            set_consumer(consumer_found, token)
+
+        if consumer then
+            set_consumer(consumer, nil, nil)
         end
+
     end
 
     -- If no roles to verify
@@ -291,22 +316,39 @@ local function verify_token(conf)
     return false, { status = 403, message = "Access token does not have the required scope/role" }
 end
 
-function JwtKeycloakHandler:new()
-    JwtKeycloakHandler.super.new(self, "jwt-keycloak")
-end
 
 function JwtKeycloakHandler:access(conf)
     JwtKeycloakHandler.super.access(self)
 
-    if not conf.run_on_preflight and get_method() == "OPTIONS" then
+    -- check if preflight request and whether it should be authenticated
+    if not conf.run_on_preflight and kong.request.get_method() == "OPTIONS" then
         return
     end
 
-    local ok, err = verify_token(conf)
-    if not ok then
-        return responses.send(err.status, err.message)
+    if conf.anonymous and kong.client.get_credential() then
+        -- we're already authenticated, and we're configured for using anonymous,
+        -- hence we're in a logical OR between auth methods and we're already done.
+        return
     end
 
+    local ok, err = do_authentication(conf)
+    if not ok then
+        if conf.anonymous then
+            -- get anonymous user
+            local consumer_cache_key = kong.db.consumers:cache_key(conf.anonymous)
+            local consumer, err      = kong.cache:get(consumer_cache_key, nil,
+                                                    load_consumer,
+                                                    conf.anonymous, true)
+            if err then
+                kong.log.err(err)
+                return kong.response.exit(500, { message = "An unexpected error occurred" })
+            end
+
+            set_consumer(consumer, nil, nil)
+        else
+            return kong.response.exit(err.status, err.errors or { message = err.message })
+        end
+    end
 end
 
 return JwtKeycloakHandler

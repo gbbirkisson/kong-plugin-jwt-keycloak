@@ -1,5 +1,5 @@
 package = "jwt-keycloak"
-version = "1.0-1"
+version = "1.0-2"
 source = {
   url = "TBD"
 }
@@ -8,13 +8,13 @@ description = {
   license = "MIT"
 }
 dependencies = {
-  "lua ~> 5.1"
+  "lua ~> 5"
 }
 build = {
   type = "builtin",
   modules = {
-    ["kong.plugins.jwt-keycloak.migrations.cassandra"] = "migrations/cassandra.lua",
-    ["kong.plugins.jwt-keycloak.migrations.postgres"] = "migrations/postgres.lua",
+    ["kong.plugins.jwt-keycloak.migrations.init"] = "migrations/init.lua",
+    ["kong.plugins.jwt-keycloak.migrations.000_base_jwt_keycloak"] = "migrations/000_base_jwt_keycloak.lua",
     ["kong.plugins.jwt-keycloak.api"]  = "api.lua",
     ["kong.plugins.jwt-keycloak.daos"]  = "daos.lua",
     ["kong.plugins.jwt-keycloak.schema"]  = "schema.lua",

@@ -2,7 +2,7 @@ include makefiles/*.mk
 
 REPOSITORY?=gbbirkisson
 IMAGE?=kong-plugin-jwt-keycloak
-VERSION?=0.14.1
+VERSION?=1.1.0rc1
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${VERSION}
 
 build:

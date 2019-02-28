@@ -1,12 +1,14 @@
 # Kong plugin jwt-keycloak
 
+TODO: FIX cassandra
+
 # Installation
 
 To install do the following:
-* Copy the plugin folder `./jwt-keycloak` to your desired location, i.e: `/etc/kong/plugins/jwt-keycloak`
+* Pack the rock: `cd jwt-keycloak && luarocks make && luarocks pack jwt-keycloak 1.0-2` 
+* Install the rock on kong node: `luarocks install jwt-keycloak-1.0-2.all.rock`
 * Set environmental variables for kong:
-    * `LUA_PATH=/etc/?.lua;;`
-    * `KONG_PLUGINS=bundled,jwt-keycloak`
+    * `KONG_PLUGINS="bundled,jwt-keycloak"`
 
 See [Dockerfile](./Dockerfile) for more concrete example.
 
@@ -109,6 +111,7 @@ curl -X POST http://localhost:8001/plugins \
 | config.run_on_preflight                   | no        | `true`    | A boolean value that indicates whether the plugin should run (and try to authenticate) on OPTIONS preflight requests, if set to false then OPTIONS requests will always be allowed. |
 | config.maximum_expiration                 | no        | `0`       | An integer limiting the lifetime of the JWT to maximum_expiration seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, exp must be specified as well in the claims_to_verify property. The default value of 0 represents an indefinite period. Potential clock skew should be considered when configuring this value. |
 | config.claims_to_verify                   | no        | `exp`     | A list of registered claims (according to RFC 7519) that Kong can verify as well. Accepted values: exp, nbf |
+| config.anonymous                          | no        |           | An optional string (consumer uuid) value to use as an “anonymous” consumer if authentication fails. If empty (default), the request will fail with an authentication failure 4xx. Please note that this value must refer to the Consumer id attribute which is internal to Kong, and not its custom_id. |
 | config.algorithm                          | no        | `RS256`   | The algorithm used to verify the token's signature. Can be HS256, HS384, HS512, RS256, or ES256. |
 | config.allow_all_iss                      | semi      | `false`   | A boolean value that indicates if tokens from all issuers should be allowed to consume this route/service/api. |
 | config.allowed_iss                        | semi      |           | A list of allowed issuers for this route/service/api. This parameter is required if `allow_all_iss` is set to false |
@@ -197,6 +200,14 @@ Create a client in keycloak admin (master realm):
 
 ```bash
 CLIENT_ID=<YOUR_CLIENT_ID> CLIENT_SECRET=<YOUR_CLIENT_SECRET> make test
+```
+
+## Useful debug commands
+
+```bash
+docker exec -it kong tail -f /proxy_error.log
+
+docker exec -it kong tail -f /admin_error.log
 ```
 
 ## Running tests with cassandra
