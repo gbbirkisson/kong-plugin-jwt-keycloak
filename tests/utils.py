@@ -1,7 +1,7 @@
 import random
 import time
-
-import requests
+import unittest
+import uuid
 
 from tests.config import *
 
@@ -47,13 +47,15 @@ def ensure_plugin():
     time.sleep(0.5)
 
 
-def create_consumer(client_id):
+def create_consumer(client_id, **kwargs):
+    custom_id = kwargs.get('custom_id', client_id)
     r = requests.post(KONG_ADMIN + "/consumers", json={
         "username": client_id,
-        "custom_id": client_id
+        "custom_id": custom_id
     })
     assert r.status_code == CREATED or r.status_code == 409
     time.sleep(0.5)
+    return kwargs.get('custom_id', r.json()['id'])
 
 
 def delete_consumer(client_id):
@@ -67,8 +69,8 @@ def create_api(config, expected_response=CREATED):
         def wrapper(*args, **kwargs):
             api_name = "test" + str(random.randint(1, 1000000))
             r = requests.post(KONG_ADMIN + "/services", data={
-                 "name": api_name,
-                 "url": "http://mockbin.org/headers"
+                "name": api_name,
+                "url": "http://mockbin.org/headers"
             })
             assert r.status_code == CREATED
             r = requests.post(KONG_ADMIN + "/services/" + api_name + "/routes", data={
@@ -109,11 +111,58 @@ def call_api(token=None, method='get', params=None):
     return real_decorator
 
 
-def authenticate(client_id, client_secret, **kwargs):
+def create_client(client_id, **kwargs):
+    id = str(uuid.uuid4())
+
+    if client_id is None:
+        client_id = str(uuid.uuid4())
+
+    if kwargs.get('create_consumer'):
+        client_id = create_consumer(client_id, **kwargs)
+    client_secret = str(uuid.uuid4())
+    r = requests.post(KC_HOST + "/admin/realms/master/clients",
+                      headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN},
+                      json={
+                          'id': id,
+                          'clientId': client_id,
+                          'clientAuthenticatorType': 'client-secret',
+                          'secret': client_secret,
+                          'serviceAccountsEnabled': True,
+                          'standardFlowEnabled': False,
+                          'publicClient': False,
+                          'enabled': True
+                      })
+
+    assert r.status_code == 201
+
+    r = requests.post(KC_HOST + "/admin/realms/master/clients/" + id + '/roles',
+                      headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN},
+                      json={
+                          'name': 'test_role'
+                      })
+
+    assert r.status_code == 201
+
+    return client_id, client_secret
+
+
+def authenticate(**kwargs_outer):
     def real_decorator(func):
         def wrapper(*args, **kwargs):
+            client_id, client_secret = create_client(None, **kwargs_outer)
             result = func(*args, token=get_kc_token(client_id, client_secret), **kwargs)
             return result
+
+        return wrapper
+
+    return real_decorator
+
+
+def skip(reason):
+    def real_decorator(func):
+        def wrapper(*args, **kwargs):
+            unittest.TestCase.skipTest(None, reason)
+            return
 
         return wrapper
 

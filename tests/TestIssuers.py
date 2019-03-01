@@ -12,7 +12,7 @@ class TestIssuers(unittest.TestCase):
         'consumer_match': False,
         'allow_all_iss': True
     })
-    @authenticate(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+    @authenticate()
     @call_api()
     def test_allow_all_iss(self, status, body):
         self.assertEqual(OK, status)
@@ -21,7 +21,7 @@ class TestIssuers(unittest.TestCase):
         'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
-    @authenticate(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+    @authenticate()
     @call_api()
     def test_allow_all_iss(self, status, body):
         self.assertEqual(OK, status)
@@ -33,7 +33,7 @@ class TestIssuers(unittest.TestCase):
             'http://localhost:8080/auth/realms/master'
         ]
     })
-    @authenticate(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+    @authenticate()
     @call_api()
     def test_allow_all_iss_double(self, status, body):
         self.assertEqual(OK, status)
@@ -44,7 +44,7 @@ class TestIssuers(unittest.TestCase):
             'http://localhost:8080/auth/realms/not_found'
         ]
     })
-    @authenticate(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+    @authenticate()
     @call_api()
     def test_allow_all_iss_rainy(self, status, body):
         self.assertEqual(UNAUTHORIZED, status)

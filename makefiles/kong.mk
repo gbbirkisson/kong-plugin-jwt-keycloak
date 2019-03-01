@@ -53,7 +53,7 @@ kong-db-stop:
 
 kong-start: build
 	@echo "Creating kong..."
-	@docker run -it --rm \
+	@docker run -d --rm \
 		--name ${KONG_CONTAINER_NAME} \
 		--link=${KONG_DB_CONTAINER_NAME}:db \
 		-p ${KONG_PORT}:8000 \
@@ -76,11 +76,14 @@ kong-stop:
 	@echo "Removing Kong..."
 	- @docker stop ${KONG_CONTAINER_NAME}
 
-kong-log-proxy:
-	- @docker exec -it ${KONG_CONTAINER_NAME} cat /proxy_error.log
+kong-log:
+	- @docker logs -f ${KONG_CONTAINER_NAME}
 
-kong-log-admin:
-	- @docker exec -it ${KONG_CONTAINER_NAME} cat /admin_error.log
+kong-err-proxy:
+	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 /proxy_error.log
+
+kong-er-admin:
+	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 /admin_error.log
 
 kong-restart: kong-stop kong-db-stop kong-create
 	- @docker logs ${KONG_CONTAINER_NAME}

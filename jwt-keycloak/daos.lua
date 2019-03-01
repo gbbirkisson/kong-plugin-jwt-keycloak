@@ -10,7 +10,7 @@ return {
             { id = typedefs.uuid },
             { created_at = typedefs.auto_timestamp_s },
             { iss = { type = "string", required = true, unique = true }, },
-            { public_key = { type = "string", required = true, unique = true }, },
+            { public_key = { type = "string", required = true }, },
         },
     },
 }
