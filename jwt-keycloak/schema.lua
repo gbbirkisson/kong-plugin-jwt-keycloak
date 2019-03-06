@@ -21,7 +21,7 @@ return {
           { run_on_preflight = { type = "boolean", default = true }, },
           { maximum_expiration = { type = "number", default = 0, between = { 0, 31536000 }, }, },
           { algorithm = { type = "string", default = "RS256" }, },
-          { allow_all_iss = { type = "boolean", default = false }, },
+
           { allowed_iss = { type = "set", elements = { type = "string" }, default = nil }, },
           { roles = { type = "set", elements = { type = "string" }, default = nil }, },
           { realm_roles = { type = "set", elements = { type = "string" }, default = nil }, },

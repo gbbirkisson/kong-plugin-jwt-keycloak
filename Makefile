@@ -31,16 +31,19 @@ test: restart-all sleep
 	@echo "Testing kong version ${VERSION} with ${KONG_DATABASE}"
 	@echo
 
-	@python -m unittest discover -s ./tests -t ./tests -p *.py -v
+	@cd tests && $(MAKE) --no-print-directory tests-integration
 
 	@echo ======================================================================
 	@echo "Testing kong version ${VERSION} with ${KONG_DATABASE} was successful"
 	@echo
 
 test-all:
-	@echo "Starting tests for multiple versions"
+	@echo "Running unit tests"
+	@cd tests && $(MAKE) --no-print-directory tests-unit
+	
+	@echo "Starting integration tests for multiple versions"
 	@set -e; for t in  $(TEST_VERSIONS); do \
-    	$(MAKE) --no-print-directory test VERSION=$$t KONG_DATABASE=postgres ; \
+    $(MAKE) --no-print-directory test VERSION=$$t KONG_DATABASE=postgres ; \
 		$(MAKE) --no-print-directory test VERSION=$$t KONG_DATABASE=cassandra ; \
     done
 	@echo "All test successful"

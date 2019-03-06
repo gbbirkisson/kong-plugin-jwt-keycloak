@@ -1,5 +1,4 @@
 ./idea
-./tests
 ./makefiles
 Dockerfile
 Makefile

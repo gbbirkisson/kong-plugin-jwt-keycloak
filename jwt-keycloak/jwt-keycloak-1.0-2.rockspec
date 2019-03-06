@@ -18,6 +18,7 @@ build = {
     ["kong.plugins.jwt-keycloak.api"]  = "api.lua",
     ["kong.plugins.jwt-keycloak.daos"]  = "daos.lua",
     ["kong.plugins.jwt-keycloak.schema"]  = "schema.lua",
-    ["kong.plugins.jwt-keycloak.handler"] = "handler.lua"
+    ["kong.plugins.jwt-keycloak.handler"] = "handler.lua",
+    ["kong.plugins.jwt-keycloak.keycloak_keys"] = "keycloak_keys.lua"
   }
 }
