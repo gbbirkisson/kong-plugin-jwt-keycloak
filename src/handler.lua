@@ -142,9 +142,9 @@ local function set_consumer(consumer, credential, token)
     end
 end
 
-local function get_keys(iss)
+local function get_keys(well_known_endpoint)
     kong.log.debug('Getting public keys from keycloak')
-    keys, err = keycloak_keys.get_issuer_keys(iss)
+    keys, err = keycloak_keys.get_issuer_keys(well_known_endpoint)
     if err then
         return nil, err
     end
@@ -164,8 +164,9 @@ end
 local function validate_signature(conf, jwt, second_call)
     local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
     
+    well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
     -- Retrieve public keys
-    local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, jwt.claims.iss, true)
+    local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, well_known_endpoint, true)
 
     if not public_keys then
         if err then

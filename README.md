@@ -1,6 +1,17 @@
 # Kong plugin jwt-keycloak
 
-A plugin to validate access tokens issued by Keycloak
+A plugin for the [Kong Microservice API Gateway](https://konghq.com/solutions/gateway/) to validate access tokens issued by [Keycloak](https://www.keycloak.org/). It uses the [Well-Known Uniform Resource Identifiers](https://tools.ietf.org/html/rfc5785) provided by [Keycloak](https://www.keycloak.org/) to load [JWK](https://tools.ietf.org/html/rfc7517) public keys from issuers that are specifically allowed for each endpoint.
+
+The biggest advantages of this plugin is that it supports:
+
+* Rotating public keys
+* Authorization based on token claims:
+    * `scope`
+    * `realm_access`
+    * `resource_access`
+* Matching Keycloak users/clients to Kong consumers
+
+If you have any suggestion or comments, please feel free to open an issue on this GitHub page.
 
 ## Tested and working for
 
@@ -46,7 +57,7 @@ See [Dockerfile](./Dockerfile) for more concrete example.
 
 ### Enabling on endpoints
 
-The same principle applies to this plugin as the standard jwt plugin that comes with kong. You can enable it on service, routes, apis and globally.
+The same principle applies to this plugin as the [standard jwt plugin that comes with kong](https://docs.konghq.com/hub/kong-inc/jwt/). You can enable it on service, routes and globally.
 
 #### Service
 
@@ -87,11 +98,12 @@ curl -X POST http://localhost:8001/plugins \
 | config.maximum_expiration                 | no        | `0`       | An integer limiting the lifetime of the JWT to `maximum_expiration` seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, `exp` must be specified as well in the `claims_to_verify` property. The default value of `0` represents an indefinite period. Potential clock skew should be considered when configuring this value. |
 | config.algorithm                          | no        | `RS256`   | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`. |
 | config.allowed_iss                        | yes       |           | A list of allowed issuers for this route/service/api. |
-| config.iss_key_grace_period               | no        | `5`       | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin. |
+| config.iss_key_grace_period               | no        | `10`      | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin. |
+| config.well_known_template                | false     | *see description* | A string template that the well known endpoint for keycloak is created from. String formatting is applied on the template and `%s` is replaced by the issuer of the token. Default value is `%s/.well-known/openid-configuration` |
 | config.scope                              | no        |           | A list of scopes the token must have to access the api, i.e. `["email"]`. The token only has to have one of the listed scopes to be authorized. |
 | config.roles                              | no        |           | A list of roles of current client the token must have to access the api, i.e. `["uma_protection"]`. The token only has to have one of the listed roles to be authorized. |
-| config.realm_roles                        | no        |           | A list of realm roles the token must have to access the api, i.e. `["offline_access"]`. The token only has to have one of the listed roles to be authorized. |
-| config.client_roles                       | no        |           | A list of roles of different client the token must have to access the api, i.e. `["account:manage-account"]`. The format for each entry should be `<CLIENT_NAME>:<ROLE_NAME>`. The token only has to have one of the listed roles to be authorized. |
+| config.realm_roles                        | no        |           | A list of realm roles (`realm_access`) the token must have to access the api, i.e. `["offline_access"]`. The token only has to have one of the listed roles to be authorized. |
+| config.client_roles                       | no        |           | A list of roles of a different client (`resource_access`) the token must have to access the api, i.e. `["account:manage-account"]`. The format for each entry should be `<CLIENT_NAME>:<ROLE_NAME>`. The token only has to have one of the listed roles to be authorized. |
 | config.consumer_match                     | no        | `false`   | A boolean value that indicates if the plugin should find a kong consumer with `id`/`custom_id` that equals the `consumer_match_claim` claim in the access token. |
 | config.consumer_match_claim               | no        | `azp`     | The claim name in the token that the plugin will try to match the kong `id`/`custom_id` against. |
 | config.consumer_match_claim_custom_id     | no        | `false`   | A boolean value that indicates if the plugin should match the `consumer_match_claim` claim against the consumers `id` or `custom_id`. By default it matches the consumer against the `id`. |
@@ -149,7 +161,7 @@ Requires:
 
 **Because testing uses docker host networking it does not work on MacOS**
 
-### Setup for integration tests
+### Setup before tests
 
 ```bash
 make keycloak-start

@@ -16,7 +16,8 @@ return {
           { algorithm = { type = "string", default = "RS256" }, },
 
           { allowed_iss = { type = "set", elements = { type = "string" }, required = true }, },
-          { iss_key_grace_period = { type = "number", default = 5, between = { 1, 60 }, }, },
+          { iss_key_grace_period = { type = "number", default = 10, between = { 1, 60 }, }, },
+          { well_known_template = { type = "string", default = "%s/.well-known/openid-configuration" }, },
           
           { scope = { type = "set", elements = { type = "string" }, default = nil }, },
           { roles = { type = "set", elements = { type = "string" }, default = nil }, },

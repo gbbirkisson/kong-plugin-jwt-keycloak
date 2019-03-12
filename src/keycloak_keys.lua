@@ -18,12 +18,19 @@ local function get_request(url)
     end
     
     return res, nil
-
 end
 
-local function get_issuer_keys(issuer)
-    -- TODO: Call the .well-known endpoint
-    local res, err = get_request(issuer .. '/protocol/openid-connect/certs')
+local function get_wellknown_endpoint(well_known_template, issuer)
+    return string.format(well_known_template, issuer)
+end
+
+local function get_issuer_keys(well_known_endpoint)
+    local res, err = get_request(well_known_endpoint)
+    if err then
+        return nil, err
+    end
+
+    local res, err = get_request(res['jwks_uri'])
     if err then
         return nil, err
     end
@@ -41,4 +48,5 @@ end
 return {
     get_request = get_request,
     get_issuer_keys = get_issuer_keys,
+    get_wellknown_endpoint = get_wellknown_endpoint,
 }
