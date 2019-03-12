@@ -1,4 +1,4 @@
-# Kong plugin jwt-keycloak
+<h1>Kong plugin jwt-keycloak</h1>
 
 A plugin for the [Kong Microservice API Gateway](https://konghq.com/solutions/gateway/) to validate access tokens issued by [Keycloak](https://www.keycloak.org/). It uses the [Well-Known Uniform Resource Identifiers](https://tools.ietf.org/html/rfc5785) provided by [Keycloak](https://www.keycloak.org/) to load [JWK](https://tools.ietf.org/html/rfc7517) public keys from issuers that are specifically allowed for each endpoint.
 
@@ -15,27 +15,26 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 
 ## Table of Contents
 
-- [Kong plugin jwt-keycloak](#kong-plugin-jwt-keycloak)
-  - [Table of Contents](#table-of-contents)
-  - [Tested and working for](#tested-and-working-for)
-  - [Installation](#installation)
-    - [Using luarocks](#using-luarocks)
-    - [From source](#from-source)
-      - [Packing the rock](#packing-the-rock)
-      - [Installing the rock](#installing-the-rock)
-    - [Enabling plugin](#enabling-plugin)
-    - [Examples](#examples)
-  - [Usage](#usage)
-    - [Enabling on endpoints](#enabling-on-endpoints)
-      - [Service](#service)
-      - [Route](#route)
-      - [Globally](#globally)
-    - [Parameters](#parameters)
-    - [Example](#example)
-  - [Testing](#testing)
-    - [Setup before tests](#setup-before-tests)
-    - [Running tests](#running-tests)
-    - [Useful debug commands](#useful-debug-commands)
+- [Table of Contents](#table-of-contents)
+- [Tested and working for](#tested-and-working-for)
+- [Installation](#installation)
+  - [Using luarocks](#using-luarocks)
+  - [From source](#from-source)
+    - [Packing the rock](#packing-the-rock)
+    - [Installing the rock](#installing-the-rock)
+  - [Enabling plugin](#enabling-plugin)
+  - [Examples](#examples)
+- [Usage](#usage)
+  - [Enabling on endpoints](#enabling-on-endpoints)
+    - [Service](#service)
+    - [Route](#route)
+    - [Globally](#globally)
+  - [Parameters](#parameters)
+  - [Example](#example)
+- [Testing](#testing)
+  - [Setup before tests](#setup-before-tests)
+  - [Running tests](#running-tests)
+  - [Useful debug commands](#useful-debug-commands)
 
 ## Tested and working for
 
