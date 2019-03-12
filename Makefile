@@ -9,6 +9,8 @@ PLUGIN_VERSION?=1.0.0-1
 
 TEST_VERSIONS?=1.0.0 1.0.1 1.0.2 1.0.3 1.1rc1
 
+### Docker ###
+
 build:
 	docker build -t ${FULL_IMAGE_NAME} --build-arg KONG_VERSION=${KONG_VERSION} --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} .
 
@@ -20,6 +22,11 @@ exec: build
 
 push: build test
 	docker push ${FULL_IMAGE_NAME}
+
+### LuaRocks ###
+
+upload:
+	luarocks upload kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.rockspec --api-key=${API_KEY}
 
 ### Testing ###
 

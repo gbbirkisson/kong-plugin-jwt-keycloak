@@ -2,7 +2,7 @@
 
 A plugin for the [Kong Microservice API Gateway](https://konghq.com/solutions/gateway/) to validate access tokens issued by [Keycloak](https://www.keycloak.org/). It uses the [Well-Known Uniform Resource Identifiers](https://tools.ietf.org/html/rfc5785) provided by [Keycloak](https://www.keycloak.org/) to load [JWK](https://tools.ietf.org/html/rfc7517) public keys from issuers that are specifically allowed for each endpoint.
 
-The biggest advantages of this plugin is that it supports:
+The biggest advantages of this plugin are that it supports:
 
 * Rotating public keys
 * Authorization based on token claims:
@@ -35,7 +35,7 @@ luarocks install kong-plugin-jwt-keycloak
 #### Packing the rock
 
 ```bash
-export PLUGIN_VERSION=1.0-3
+export PLUGIN_VERSION=1.0.0-1
 luarocks make
 luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 ```
@@ -43,7 +43,7 @@ luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 #### Installing the rock
 
 ```bash
-export PLUGIN_VERSION=1.0-3
+export PLUGIN_VERSION=1.0.0-1
 luarocks install jwt-keycloak-${PLUGIN_VERSION}.all.rock
 ```
 
@@ -51,7 +51,9 @@ luarocks install jwt-keycloak-${PLUGIN_VERSION}.all.rock
 
 Set enabled kong enabled plugins, i.e. with environmental variable: `KONG_PLUGINS="bundled,jwt-keycloak"`
 
-See [Dockerfile](./Dockerfile) for more concrete example.
+### Examples
+
+See [Dockerfile](./Dockerfile) or [luarocks Dockerfile](./luarocks.Dockerfile) for more concrete examples.
 
 ## Usage
 
