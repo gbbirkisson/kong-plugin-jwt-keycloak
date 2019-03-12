@@ -15,11 +15,12 @@ RUN luarocks install kong
 RUN luarocks install busted
 
 # Install plugin
-COPY ./jwt-keycloak /jwt-keycloak
+COPY . /jwt-keycloak
 WORKDIR /jwt-keycloak
 RUN luarocks make
-RUN luarocks pack jwt-keycloak 1.0-3
-RUN luarocks install jwt-keycloak-1.0-3.all.rock
+ARG PLUGIN_VERSION
+RUN luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
+RUN luarocks install kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.all.rock
 
 # Add custom busted binary
 COPY tests/unit_tests/busted_bin /usr/bin/busted

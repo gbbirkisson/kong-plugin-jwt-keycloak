@@ -22,6 +22,7 @@ local function get_request(url)
 end
 
 local function get_issuer_keys(issuer)
+    -- TODO: Call the .well-known endpoint
     local res, err = get_request(issuer .. '/protocol/openid-connect/certs')
     if err then
         return nil, err
@@ -37,29 +38,7 @@ local function get_issuer_keys(issuer)
     return keys, nil
 end
 
--- local key_seperator = "\n"
-
--- local function combine_issuer_keys(keys)
---     res = ""
---     sep = ""
---     for i, key in ipairs(keys) do
---         res = res .. sep .. key
---         sep = key_seperator
---     end
---     return res
--- end
-
--- local function split_issuer_keys(key_string)
---     result = {};
---     for match in (key_string..key_seperator):gmatch("(.-)"..key_seperator) do
---         table.insert(result, match);
---     end
---     return result;
--- end
-
 return {
     get_request = get_request,
     get_issuer_keys = get_issuer_keys,
-    -- split_issuer_keys = split_issuer_keys,
-    -- combine_issuer_keys = combine_issuer_keys
 }

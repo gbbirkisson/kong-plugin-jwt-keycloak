@@ -1,19 +1,20 @@
 ## Build plugin
-ARG VERSION
-FROM kong:${VERSION} as builder
+ARG KONG_VERSION
+FROM kong:${KONG_VERSION} as builder
 
 RUN apk --no-cache add zip
 WORKDIR /tmp
 
-COPY jwt-keycloak /tmp
-RUN luarocks make
-RUN luarocks pack kong-plugin-jwt-keycloak 1.0-3
+COPY . /tmp
+ARG PLUGIN_VERSION
+RUN luarocks make && luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 
 ## Create Image
-FROM kong:${VERSION}
+FROM kong:${KONG_VERSION}
 
 ENV KONG_PLUGINS="bundled,jwt-keycloak"
 
-COPY --from=builder /tmp/* /tmp/
-RUN du -h /tmp/kong-plugin-jwt-keycloak-1.0-3.all.rock
-RUN luarocks install /tmp/kong-plugin-jwt-keycloak-1.0-3.all.rock && rm /tmp/*
+COPY --from=builder /tmp/*.rock /tmp/
+
+ARG PLUGIN_VERSION
+RUN luarocks install /tmp/kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.all.rock && rm /tmp/*

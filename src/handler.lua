@@ -180,7 +180,7 @@ local function validate_signature(conf, jwt)
     end
 
     -- We could not validate signature, try to get a new keyset?
-    if socket.gettime() - public_keys.updated_at > config.min_key_update_interval then
+    if socket.gettime() - public_keys.updated_at > config.iss_key_grace_period then
         kong.cache:invalidate(issuer_cache_key)
         return validate_signature(conf, jwt)
     end
@@ -257,10 +257,9 @@ local function do_authentication(conf)
         local consumer_id = jwt.claims[conf.consumer_match_claim]
 
         if conf.consumer_match_claim_custom_id then
-            -- This call is not cached
-            consumer, err = load_consumer_by_custom_id(consumer_id)
+            consumer_cache_key = "custom_id_key_" .. consumer_id
+            consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer_by_custom_id, consumer_id, true)
         else
-            -- This call is cached
             consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
             consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer, consumer_id, true)
         end

@@ -4,7 +4,6 @@ KEYCLOAK_PORT:=8080
 KEYCLOAK_ADMIN_USER:=admin
 KEYCLOAK_ADMIN_PASS:=admin
 
-
 keycloak-start:
 	@echo "Running Keycloak..."
 	-- @docker run -d \
