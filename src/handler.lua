@@ -143,6 +143,7 @@ local function set_consumer(consumer, credential, token)
 end
 
 local function get_keys(iss)
+    kong.log.debug('Getting public keys from keycloak')
     keys, err = keycloak_keys.get_issuer_keys(iss)
     if err then
         return nil, err
@@ -153,13 +154,14 @@ local function get_keys(iss)
         decoded_keys[i] = jwt_decoder:base64_decode(key)
     end
     
+    kong.log.debug('Number of keys retrieved: ' .. table.getn(decoded_keys))
     return {
         keys = decoded_keys,
         updated_at = socket.gettime(),
     }
 end
 
-local function validate_signature(conf, jwt)
+local function validate_signature(conf, jwt, second_call)
     local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
     
     -- Retrieve public keys
@@ -175,17 +177,20 @@ local function validate_signature(conf, jwt)
     -- Verify signatures
     for _, k in ipairs(public_keys.keys) do
         if jwt:verify_signature(k) then
+            kong.log.debug('JWT signature verified')
             return nil
         end
     end
 
     -- We could not validate signature, try to get a new keyset?
-    if socket.gettime() - public_keys.updated_at > config.iss_key_grace_period then
-        kong.cache:invalidate(issuer_cache_key)
-        return validate_signature(conf, jwt)
+    since_last_update = socket.gettime() - public_keys.updated_at
+    if not second_call and since_last_update > conf.iss_key_grace_period then
+        kong.log.debug('Could not validate signature. Keys updated last ' .. since_last_update .. ' seconds ago')
+        kong.cache:invalidate_local(issuer_cache_key)
+        return validate_signature(conf, jwt, true)
     end
 
-    return false
+    return kong.response.exit(401, { message = "Invalid token signature" })
 end
 
 local function do_authentication(conf)
@@ -247,8 +252,8 @@ local function do_authentication(conf)
     end
 
     err = validate_signature(conf, jwt)
-    if err then
-        return err
+    if err ~= nil then
+        return false, err
     end
 
     -- Match consumer

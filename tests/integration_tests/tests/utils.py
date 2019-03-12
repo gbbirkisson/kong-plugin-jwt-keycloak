@@ -93,7 +93,7 @@ def create_api(config, expected_response=CREATED):
     return real_decorator
 
 
-def call_api(token=None, method='get', params=None):
+def call_api(token=None, method='get', params=None, endpoint=None):
     def real_decorator(func):
         def wrapper(*args, **kwargs):
             if token is not None:
@@ -102,7 +102,13 @@ def call_api(token=None, method='get', params=None):
                 headers = {"Authorization": "Bearer " + kwargs.get('token')}
             else:
                 headers = None
-            r = requests.request(method, kwargs['api_endpoint'], params=params, headers=headers)
+
+            if endpoint is None:
+                e = kwargs['api_endpoint']
+            else:
+                e = endpoint
+
+            r = requests.request(method, e, params=params, headers=headers)
             result = func(*args, r.status_code, r.json())
             return result
 
@@ -167,3 +173,44 @@ def skip(reason):
         return wrapper
 
     return real_decorator
+
+
+def kc_get_key(name):
+    r = requests.get(KC_HOST + "/admin/realms/master/components?parent=master&type=org.keycloak.keys.KeyProvider",
+                     headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN})
+    assert r.status_code == 200
+    r = [a for a in r.json() if a['name'] == name]
+    if len(r) == 1:
+        return r[0]
+    return None
+
+
+def kc_delete_key(key):
+    r = requests.delete(KC_HOST + "/admin/realms/master/components/" + key['id'],
+                        headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN})
+    assert r.status_code == 204
+
+
+def kc_add_key(name, priority):
+    r = requests.post(KC_HOST + "/admin/realms/master/components",
+                      headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN},
+                      json={
+                          'config': {
+                              'active': [True],
+                              'algorithm': ['RS256'],
+                              'enabled': [True],
+                              'keySize': [2048],
+                              'priority': [priority]
+                          },
+                          'name': name,
+                          'parentId': 'master',
+                          'providerId': 'rsa-generated',
+                          'providerType': 'org.keycloak.keys.KeyProvider'
+                      })
+
+    assert r.status_code == 201
+
+    r = requests.get(r.headers['Location'], headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN})
+    assert r.status_code == 200
+
+    return r.json()
