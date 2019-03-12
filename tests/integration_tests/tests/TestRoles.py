@@ -3,12 +3,9 @@ from tests.utils import *
 
 class TestRoles(unittest.TestCase):
 
-    def setUp(self):
-        ensure_plugin()
-
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @authenticate()
     @call_api()
@@ -18,7 +15,7 @@ class TestRoles(unittest.TestCase):
     @skip("New keycloak handles roles differently")
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['test_role']
     })
     @authenticate()
@@ -28,7 +25,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['not_found']
     })
     @authenticate()
@@ -40,7 +37,7 @@ class TestRoles(unittest.TestCase):
     @skip("New keycloak handles roles differently")
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['test_role', 'not_found']
     })
     @authenticate()
@@ -50,7 +47,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'realm_roles': ['uma_authorization']
     })
     @authenticate()
@@ -60,7 +57,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'realm_roles': ['not_found']
     })
     @authenticate()
@@ -71,7 +68,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'realm_roles': ['uma_authorization', 'not_found']
     })
     @authenticate()
@@ -81,7 +78,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['account:manage-account']
     })
     @authenticate()
@@ -91,7 +88,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['account:manage-something-else']
     })
     @authenticate()
@@ -102,7 +99,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['account:manage-account', 'account:manage-something-else']
     })
     @authenticate()
@@ -112,7 +109,7 @@ class TestRoles(unittest.TestCase):
 
     @create_api({
         'consumer_match': False,
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['user:do-user-stuff']
     })
     @authenticate()

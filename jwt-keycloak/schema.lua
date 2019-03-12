@@ -1,12 +1,5 @@
 local typedefs = require "kong.db.schema.typedefs"
 
-local function validate_iss(config)
-  if not config.allow_all_iss and (not config.allowed_iss or not next(config.allowed_iss)) then
-      return nil, "You must set 'allowed_iss' if 'allow_all_iss' is set to false"
-    end
-  return true
-end
-
 return {
   name = "jwt-keycloak-endpoint",
   fields = {
@@ -22,16 +15,17 @@ return {
           { maximum_expiration = { type = "number", default = 0, between = { 0, 31536000 }, }, },
           { algorithm = { type = "string", default = "RS256" }, },
 
-          { allowed_iss = { type = "set", elements = { type = "string" }, default = nil }, },
+          { allowed_iss = { type = "set", elements = { type = "string" }, required = true }, },
+          { min_key_update_interval = { type = "number", default = 5, between = { 1, 60 }, }, },
           { roles = { type = "set", elements = { type = "string" }, default = nil }, },
           { realm_roles = { type = "set", elements = { type = "string" }, default = nil }, },
           { client_roles = { type = "set", elements = { type = "string" }, default = nil }, },
+
           { consumer_match = { type = "boolean", default = false }, },
           { consumer_match_claim = { type = "string", default = "azp" }, },
           { consumer_match_claim_custom_id = { type = "boolean", default = false }, },
           { consumer_match_ignore_not_found = { type = "boolean", default = false }, },
         },
-        custom_validator = validate_iss,
       },
     },
   },

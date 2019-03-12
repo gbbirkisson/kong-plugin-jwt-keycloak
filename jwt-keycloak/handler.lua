@@ -1,6 +1,8 @@
 local BasePlugin = require "kong.plugins.base_plugin"
 local constants = require "kong.constants"
 local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
+local socket = require "socket"
+local keycloak_keys = require("kong.plugins.jwt-keycloak.keycloak_keys")
 
 local re_gmatch = ngx.re.gmatch
 
@@ -79,19 +81,6 @@ function JwtKeycloakHandler:new()
     JwtKeycloakHandler.super.new(self, "jwt-keycloak")
 end
 
-local function load_public_key(iss)
-    local row, err = kong.db.jwt_keycloak_public_keys:select_by_iss(iss)
-    if err then
-        return nil, err
-    end
-
-    if not row then
-        return nil, nil
-    end
-
-    return jwt_decoder:base64_decode(row.public_key)
-end
-
 local function load_consumer(consumer_id, anonymous)
     local result, err = kong.db.consumers:select { id = consumer_id }
     if not result then
@@ -153,6 +142,52 @@ local function set_consumer(consumer, credential, token)
     end
 end
 
+local function get_keys(iss)
+    keys, err = keycloak_keys.get_issuer_keys(iss)
+    if err then
+        return nil, err
+    end
+
+    decoded_keys = {}
+    for i, key in ipairs(keys) do
+        decoded_keys[i] = jwt_decoder:base64_decode(key)
+    end
+    
+    return {
+        keys = decoded_keys,
+        updated_at = socket.gettime(),
+    }
+end
+
+local function validate_signature(conf, jwt)
+    local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
+    
+    -- Retrieve public keys
+    local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, jwt.claims.iss, true)
+
+    if not public_keys then
+        if err then
+            kong.log.err(err)
+        end
+        return kong.response.exit(403, { message = "Unable to get public key for issuer" })
+    end
+
+    -- Verify signatures
+    for _, k in ipairs(public_keys.keys) do
+        if jwt:verify_signature(k) then
+            return nil
+        end
+    end
+
+    -- We could not validate signature, try to get a new keyset?
+    if socket.gettime() - public_keys.updated_at > config.min_key_update_interval then
+        kong.cache:invalidate(issuer_cache_key)
+        return validate_signature(conf, jwt)
+    end
+
+    return false
+end
+
 local function do_authentication(conf)
     -- Retrieve token
     local token, err = retrieve_token(conf)
@@ -207,26 +242,13 @@ local function do_authentication(conf)
         end
     end
 
-    if not conf.allow_all_iss and not iss_allowed then
+    if not iss_allowed then
         return false, { status = 401, message = "Token issuer not allowed" }
     end
 
-    -- Retrieve public key
-    local public_key_cache_key = kong.db.jwt_keycloak_public_keys:cache_key(jwt.claims.iss)
-    local public_key, err = kong.cache:get(public_key_cache_key, nil, load_public_key, jwt.claims.iss, true)
-
+    err = validate_signature(conf, jwt)
     if err then
-        kong.log.err(err)
-        return kong.response.exit(500, { message = "An unexpected error occurred" })
-    end
-
-    if not public_key then
-        return kong.response.exit(403, { message = "Unable to get public key for issuer" })
-    end
-
-    -- Verify signature
-    if not jwt:verify_signature(public_key) then
-        return false
+        return err
     end
 
     -- Match consumer

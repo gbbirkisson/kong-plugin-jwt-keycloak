@@ -8,11 +8,8 @@ LONG_LASTING = 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJvQ084ZEZ3RWxN
 
 class TestBasics(unittest.TestCase):
 
-    def setUp(self):
-        ensure_plugin()
-
     @create_api({
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api()
     def test_no_auth(self, status, body):
@@ -20,7 +17,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual('Unauthorized', body.get('message'))
 
     @create_api({
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api()
     def test_preflight_rainy(self, status, body):
@@ -29,14 +26,14 @@ class TestBasics(unittest.TestCase):
 
     @create_api({
         'run_on_preflight': False,
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api(method='options')
     def test_preflight(self, status, body):
         self.assertEqual(OK, status)
 
     @create_api({
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api(params={"jwt": 1234})
     def test_bad_token(self, status, body):
@@ -44,7 +41,7 @@ class TestBasics(unittest.TestCase):
 
     @create_api({
         'algorithm': 'HS256',
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api(token=STANDARD_JWT)
     def test_invalid_algorithm(self, status, body):
@@ -52,7 +49,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual('Invalid algorithm', body.get('message'))
 
     @create_api({
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api(token=STANDARD_JWT)
     def test_invalid_exp(self, status, body):
@@ -60,7 +57,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual('Token claims invalid: ["exp"]="token expired"', body.get('message'))
 
     @create_api({
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/NOT_FOUND']
     })
     @call_api(token=NOT_FOUND_JWT)
     def test_invalid_iss(self, status, body):
@@ -68,7 +65,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual('Unable to get public key for issuer', body.get('message'))
 
     @create_api({
-        'allow_all_iss': True,
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'maximum_expiration': 5000
     })
     @call_api(token=LONG_LASTING)
@@ -77,7 +74,7 @@ class TestBasics(unittest.TestCase):
         self.assertEqual('Token claims invalid: ["exp"]="exceeds maximum allowed expiration"', body.get('message'))
 
     @create_api({
-        'allow_all_iss': True
+        'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @call_api(token=BAD_SIGNATURE)
     def test_bad_signature(self, status, body):

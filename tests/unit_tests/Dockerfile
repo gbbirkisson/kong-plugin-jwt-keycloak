@@ -18,8 +18,8 @@ RUN luarocks install busted
 COPY ./jwt-keycloak /jwt-keycloak
 WORKDIR /jwt-keycloak
 RUN luarocks make
-RUN luarocks pack jwt-keycloak 1.0-2
-RUN luarocks install jwt-keycloak-1.0-2.all.rock
+RUN luarocks pack jwt-keycloak 1.0-3
+RUN luarocks install jwt-keycloak-1.0-3.all.rock
 
 # Add custom busted binary
 COPY tests/unit_tests/busted_bin /usr/bin/busted

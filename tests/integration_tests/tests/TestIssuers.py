@@ -1,21 +1,7 @@
-import unittest
-
 from tests.utils import *
 
 
 class TestIssuers(unittest.TestCase):
-
-    def setUp(self):
-        ensure_plugin()
-
-    @create_api({
-        'consumer_match': False,
-        'allow_all_iss': True
-    })
-    @authenticate()
-    @call_api()
-    def test_allow_all_iss(self, status, body):
-        self.assertEqual(OK, status)
 
     @create_api({
         'consumer_match': False,

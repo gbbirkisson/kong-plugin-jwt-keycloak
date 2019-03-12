@@ -1,48 +1,65 @@
-local httpc = require "resty.http".new()
+local http = require "socket.http"
+local cjson_safe = require "cjson.safe"
+local convert = require "kong.plugins.jwt-keycloak.key_conversion"
 
--- function table_to_string(tbl)
---     local result = ""
---     for k, v in pairs(tbl) do
---         -- Check the key type (ignore any numerical keys - assume its an array)
---         if type(k) == "string" then
---             result = result.."[\""..k.."\"]".."="
---         end
-
---         -- Check the value type
---         if type(v) == "table" then
---             result = result..table_to_string(v)
---         elseif type(v) == "boolean" then
---             result = result..tostring(v)
---         else
---             result = result.."\""..v.."\""
---         end
---         result = result..","
---     end
---     -- Remove leading commas from the result
---     if result ~= "" then
---         result = result:sub(1, result:len()-1)
---     end
---     return result
--- end
-
-local function get_issuer_keys(issuer)
-    -- TODO: Call well known endpoint
+local function get_request(url)
     local res
-    local err
-    res, err = httpc:request_uri(issuer .. '/protocol/openid-connect/certs', {
-        method = "GET",
-        keepalive_timeout = 5,
-        keepalive_pool = 5
-    })
+    local status
+
+    res, status = http.request(url)
     
-    if not res then
-        return nil, 'Failed to get jwks_uri endpoint'
+    if status ~= 200 then
+        return nil, 'Failed calling url ' .. url
     end
-    print("aa")
+
+    res, err = cjson_safe.decode(res)
+    if not res then
+        return nil, 'Failed to parse json response'
+    end
+    
+    return res, nil
+
 end
 
---keys, err = get_issuer_keys('http://localhost:8080/auth/realms/master')
--- print(table_to_string(keys[1]))
+local function get_issuer_keys(issuer)
+    local res, err = get_request(issuer .. '/protocol/openid-connect/certs')
+    if err then
+        return nil, err
+    end
+
+    keys = {}
+    for i, key in ipairs(res['keys']) do
+        keys[i] = string.gsub(
+            convert.convert_kc_key(key), 
+            "[\r\n]+", ""
+        )
+    end
+    return keys, nil
+end
+
+-- local key_seperator = "\n"
+
+-- local function combine_issuer_keys(keys)
+--     res = ""
+--     sep = ""
+--     for i, key in ipairs(keys) do
+--         res = res .. sep .. key
+--         sep = key_seperator
+--     end
+--     return res
+-- end
+
+-- local function split_issuer_keys(key_string)
+--     result = {};
+--     for match in (key_string..key_seperator):gmatch("(.-)"..key_seperator) do
+--         table.insert(result, match);
+--     end
+--     return result;
+-- end
+
 return {
-    get_issuer_keys = get_issuer_keys
+    get_request = get_request,
+    get_issuer_keys = get_issuer_keys,
+    -- split_issuer_keys = split_issuer_keys,
+    -- combine_issuer_keys = combine_issuer_keys
 }

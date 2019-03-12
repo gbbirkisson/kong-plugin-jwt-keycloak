@@ -19,6 +19,7 @@ kong-db-create-postgres:
 	@echo "Creating Kong DB"
 	- @docker run --rm -d \
 		--name ${KONG_DB_CONTAINER_NAME} \
+		--net=host \
 		 -e POSTGRES_USER=${KONG_DB_USER} \
 		 -e POSTGRES_DB=${KONG_DB_PASS} \
 		 -e POSTGRES_PASSWORD=${KONG_DB_NAME} \
@@ -29,6 +30,7 @@ kong-db-create-cassandra:
 	@echo "Creating Kong DB"
 	- @docker run --rm -d \
 		--name ${KONG_DB_CONTAINER_NAME} \
+		--net=host \
 		 cassandra
 	@$(MAKE) --no-print-directory CONTAINER=${KONG_DB_CONTAINER_NAME} PATTERN="Starting listening for CQL clients" wait-for-log
 
@@ -36,10 +38,10 @@ kong-db-migrate: build
 	@echo "Migrating Kong DB"
 	@docker run -it --rm \
 		--name ${KONG_CONTAINER_NAME} \
-		--link=${KONG_DB_CONTAINER_NAME}:db \
+		--net=host \
 		-e "KONG_DATABASE=${KONG_DATABASE}" \
-		-e "KONG_CASSANDRA_CONTACT_POINTS=db" \
-		-e "KONG_PG_HOST=db" \
+		-e "KONG_CASSANDRA_CONTACT_POINTS=localhost" \
+		-e "KONG_PG_HOST=localhost" \
 		-e "KONG_PG_USER=${KONG_DB_USER}" \
 		-e "KONG_PG_PASSWORD=${KONG_DB_PASS}" \
 		-e "KONG_PG_DATABASE=${KONG_DB_NAME}" \
@@ -55,17 +57,15 @@ kong-start: build
 	@echo "Creating kong..."
 	@docker run -d --rm \
 		--name ${KONG_CONTAINER_NAME} \
-		--link=${KONG_DB_CONTAINER_NAME}:db \
-		-p ${KONG_PORT}:8000 \
-        -p ${KONG_ADMIN_PORT}:8001 \
+		--net=host \
         -e "KONG_LOG_LEVEL=debug" \
         -e "KONG_PROXY_ACCESS_LOG=/proxy_access.log" \
         -e "KONG_ADMIN_ACCESS_LOG=/admin_access.log" \
         -e "KONG_PROXY_ERROR_LOG=/proxy_error.log" \
         -e "KONG_ADMIN_ERROR_LOG=/admin_error.log" \
 		-e "KONG_DATABASE=${KONG_DATABASE}" \
-		-e "KONG_CASSANDRA_CONTACT_POINTS=db" \
-		-e "KONG_PG_HOST=db" \
+		-e "KONG_CASSANDRA_CONTACT_POINTS=localhost" \
+		-e "KONG_PG_HOST=localhost" \
 		-e "KONG_PG_USER=${KONG_DB_USER}" \
 		-e "KONG_PG_PASSWORD=${KONG_DB_PASS}" \
 		-e "KONG_PG_DATABASE=${KONG_DB_NAME}" \
@@ -82,7 +82,7 @@ kong-log:
 kong-err-proxy:
 	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 /proxy_error.log
 
-kong-er-admin:
+kong-err-admin:
 	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 /admin_error.log
 
 kong-restart: kong-stop kong-db-stop kong-create

@@ -5,7 +5,7 @@ IMAGE?=kong-plugin-jwt-keycloak
 VERSION?=1.0
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${VERSION}
 
-TEST_VERSIONS?=1.0 1.1rc1
+TEST_VERSIONS?=1.0.0 1.0.1 1.0.3 1.1rc1
 
 build:
 	docker build -t ${FULL_IMAGE_NAME} --build-arg VERSION=${VERSION} .
@@ -38,8 +38,11 @@ test: restart-all sleep
 	@echo
 
 test-all:
+	@echo ======================================================================
 	@echo "Running unit tests"
 	@cd tests && $(MAKE) --no-print-directory tests-unit
+	@echo "Unit tests passed"
+	@echo ======================================================================
 	
 	@echo "Starting integration tests for multiple versions"
 	@set -e; for t in  $(TEST_VERSIONS); do \
