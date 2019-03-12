@@ -13,14 +13,38 @@ The biggest advantages of this plugin are that it supports:
 
 If you have any suggestion or comments, please feel free to open an issue on this GitHub page.
 
+## Table of Contents
+
+- [Kong plugin jwt-keycloak](#kong-plugin-jwt-keycloak)
+  - [Table of Contents](#table-of-contents)
+  - [Tested and working for](#tested-and-working-for)
+  - [Installation](#installation)
+    - [Using luarocks](#using-luarocks)
+    - [From source](#from-source)
+      - [Packing the rock](#packing-the-rock)
+      - [Installing the rock](#installing-the-rock)
+    - [Enabling plugin](#enabling-plugin)
+    - [Examples](#examples)
+  - [Usage](#usage)
+    - [Enabling on endpoints](#enabling-on-endpoints)
+      - [Service](#service)
+      - [Route](#route)
+      - [Globally](#globally)
+    - [Parameters](#parameters)
+    - [Example](#example)
+  - [Testing](#testing)
+    - [Setup before tests](#setup-before-tests)
+    - [Running tests](#running-tests)
+    - [Useful debug commands](#useful-debug-commands)
+
 ## Tested and working for
 
-| Kong Version             | Tests passing      |
-|--------------------------|:------------------:|
-| Kong 0.13.x              | :x:                |
-| Kong 0.14.x              | :x:                |
-| Kong 1.0.x               | :white_check_mark: |
-| Kong 1.1.rc1             | :white_check_mark: |
+| Kong Version |   Tests passing    |
+| ------------ | :----------------: |
+| Kong 0.13.x  |        :x:         |
+| Kong 0.14.x  |        :x:         |
+| Kong 1.0.x   | :white_check_mark: |
+| Kong 1.1.rc1 | :white_check_mark: |
 
 ## Installation
 
@@ -84,34 +108,34 @@ curl -X POST http://localhost:8001/plugins \
     --data "config.allowed_iss=http://localhost:8080/auth/realms/master"
 ```
 
-#### Parameters
+### Parameters
 
-| Parameter                                 | Requied   | Default   | Description |
-| ----------------------------------------- | --------- | --------- | ----------- |
-| name                                      | yes       |           | The name of the plugin to use, in this case `keycloak-jwt`. |
-| service_id                                | semi      |           | The id of the Service which this plugin will target. |
-| route_id                                  | semi      |           | The id of the Route which this plugin will target. |
-| enabled                                   | no        | `true`    | Whether this plugin will be applied. |
-| config.uri_param_names                    | no        | `jwt`     | A list of querystring parameters that Kong will inspect to retrieve JWTs. |
-| config.cookie_names                       | no        |           | A list of cookie names that Kong will inspect to retrieve JWTs. |
-| config.claims_to_verify                   | no        | `exp`     | A list of registered claims (according to [RFC 7519](https://tools.ietf.org/html/rfc7519)) that Kong can verify as well. Accepted values: `exp`, `nbf`. |
-| config.anonymous                          | no        |           | An optional string (consumer uuid) value to use as an “anonymous” consumer if authentication fails. If empty (default), the request will fail with an authentication failure `4xx`. Please note that this value must refer to the Consumer `id` attribute which is internal to Kong, and not its `custom_id`. |
-| config.run_on_preflight                   | no        | `true`    | A boolean value that indicates whether the plugin should run (and try to authenticate) on `OPTIONS` preflight requests, if set to false then `OPTIONS` requests will always be allowed. |
-| config.maximum_expiration                 | no        | `0`       | An integer limiting the lifetime of the JWT to `maximum_expiration` seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, `exp` must be specified as well in the `claims_to_verify` property. The default value of `0` represents an indefinite period. Potential clock skew should be considered when configuring this value. |
-| config.algorithm                          | no        | `RS256`   | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`. |
-| config.allowed_iss                        | yes       |           | A list of allowed issuers for this route/service/api. |
-| config.iss_key_grace_period               | no        | `10`      | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin. |
-| config.well_known_template                | false     | *see description* | A string template that the well known endpoint for keycloak is created from. String formatting is applied on the template and `%s` is replaced by the issuer of the token. Default value is `%s/.well-known/openid-configuration` |
-| config.scope                              | no        |           | A list of scopes the token must have to access the api, i.e. `["email"]`. The token only has to have one of the listed scopes to be authorized. |
-| config.roles                              | no        |           | A list of roles of current client the token must have to access the api, i.e. `["uma_protection"]`. The token only has to have one of the listed roles to be authorized. |
-| config.realm_roles                        | no        |           | A list of realm roles (`realm_access`) the token must have to access the api, i.e. `["offline_access"]`. The token only has to have one of the listed roles to be authorized. |
-| config.client_roles                       | no        |           | A list of roles of a different client (`resource_access`) the token must have to access the api, i.e. `["account:manage-account"]`. The format for each entry should be `<CLIENT_NAME>:<ROLE_NAME>`. The token only has to have one of the listed roles to be authorized. |
-| config.consumer_match                     | no        | `false`   | A boolean value that indicates if the plugin should find a kong consumer with `id`/`custom_id` that equals the `consumer_match_claim` claim in the access token. |
-| config.consumer_match_claim               | no        | `azp`     | The claim name in the token that the plugin will try to match the kong `id`/`custom_id` against. |
-| config.consumer_match_claim_custom_id     | no        | `false`   | A boolean value that indicates if the plugin should match the `consumer_match_claim` claim against the consumers `id` or `custom_id`. By default it matches the consumer against the `id`. |
-| config.consumer_match_ignore_not_found    | no        | `false`   | A boolean value that indicates if the request should be let through regardless if the plugin is able to match the request to a kong consumer or not. |
+| Parameter                              | Requied | Default           | Description                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------------------- | ------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| name                                   | yes     |                   | The name of the plugin to use, in this case `keycloak-jwt`.                                                                                                                                                                                                                                                                                                                              |
+| service_id                             | semi    |                   | The id of the Service which this plugin will target.                                                                                                                                                                                                                                                                                                                                     |
+| route_id                               | semi    |                   | The id of the Route which this plugin will target.                                                                                                                                                                                                                                                                                                                                       |
+| enabled                                | no      | `true`            | Whether this plugin will be applied.                                                                                                                                                                                                                                                                                                                                                     |
+| config.uri_param_names                 | no      | `jwt`             | A list of querystring parameters that Kong will inspect to retrieve JWTs.                                                                                                                                                                                                                                                                                                                |
+| config.cookie_names                    | no      |                   | A list of cookie names that Kong will inspect to retrieve JWTs.                                                                                                                                                                                                                                                                                                                          |
+| config.claims_to_verify                | no      | `exp`             | A list of registered claims (according to [RFC 7519](https://tools.ietf.org/html/rfc7519)) that Kong can verify as well. Accepted values: `exp`, `nbf`.                                                                                                                                                                                                                                  |
+| config.anonymous                       | no      |                   | An optional string (consumer uuid) value to use as an “anonymous” consumer if authentication fails. If empty (default), the request will fail with an authentication failure `4xx`. Please note that this value must refer to the Consumer `id` attribute which is internal to Kong, and not its `custom_id`.                                                                          |
+| config.run_on_preflight                | no      | `true`            | A boolean value that indicates whether the plugin should run (and try to authenticate) on `OPTIONS` preflight requests, if set to false then `OPTIONS` requests will always be allowed.                                                                                                                                                                                                  |
+| config.maximum_expiration              | no      | `0`               | An integer limiting the lifetime of the JWT to `maximum_expiration` seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, `exp` must be specified as well in the `claims_to_verify` property. The default value of `0` represents an indefinite period. Potential clock skew should be considered when configuring this value. |
+| config.algorithm                       | no      | `RS256`           | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`.                                                                                                                                                                                                                                                                              |
+| config.allowed_iss                     | yes     |                   | A list of allowed issuers for this route/service/api.                                                                                                                                                                                                                                                                                                                                    |
+| config.iss_key_grace_period            | no      | `10`              | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin.                                                                                                                    |
+| config.well_known_template             | false   | *see description* | A string template that the well known endpoint for keycloak is created from. String formatting is applied on the template and `%s` is replaced by the issuer of the token. Default value is `%s/.well-known/openid-configuration`                                                                                                                                                        |
+| config.scope                           | no      |                   | A list of scopes the token must have to access the api, i.e. `["email"]`. The token only has to have one of the listed scopes to be authorized.                                                                                                                                                                                                                                          |
+| config.roles                           | no      |                   | A list of roles of current client the token must have to access the api, i.e. `["uma_protection"]`. The token only has to have one of the listed roles to be authorized.                                                                                                                                                                                                                 |
+| config.realm_roles                     | no      |                   | A list of realm roles (`realm_access`) the token must have to access the api, i.e. `["offline_access"]`. The token only has to have one of the listed roles to be authorized.                                                                                                                                                                                                            |
+| config.client_roles                    | no      |                   | A list of roles of a different client (`resource_access`) the token must have to access the api, i.e. `["account:manage-account"]`. The format for each entry should be `<CLIENT_NAME>:<ROLE_NAME>`. The token only has to have one of the listed roles to be authorized.                                                                                                                |
+| config.consumer_match                  | no      | `false`           | A boolean value that indicates if the plugin should find a kong consumer with `id`/`custom_id` that equals the `consumer_match_claim` claim in the access token.                                                                                                                                                                                                                         |
+| config.consumer_match_claim            | no      | `azp`             | The claim name in the token that the plugin will try to match the kong `id`/`custom_id` against.                                                                                                                                                                                                                                                                                         |
+| config.consumer_match_claim_custom_id  | no      | `false`           | A boolean value that indicates if the plugin should match the `consumer_match_claim` claim against the consumers `id` or `custom_id`. By default it matches the consumer against the `id`.                                                                                                                                                                                               |
+| config.consumer_match_ignore_not_found | no      | `false`           | A boolean value that indicates if the request should be let through regardless if the plugin is able to match the request to a kong consumer or not.                                                                                                                                                                                                                                     |
 
-#### Example
+### Example
 
 Create service and add the plugin to it, and lastly create a route:
 
