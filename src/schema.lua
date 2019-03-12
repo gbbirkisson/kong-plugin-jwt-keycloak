@@ -17,6 +17,8 @@ return {
 
           { allowed_iss = { type = "set", elements = { type = "string" }, required = true }, },
           { iss_key_grace_period = { type = "number", default = 5, between = { 1, 60 }, }, },
+          
+          { scope = { type = "set", elements = { type = "string" }, default = nil }, },
           { roles = { type = "set", elements = { type = "string" }, default = nil }, },
           { realm_roles = { type = "set", elements = { type = "string" }, default = nil }, },
           { client_roles = { type = "set", elements = { type = "string" }, default = nil }, },

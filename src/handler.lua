@@ -278,9 +278,21 @@ local function do_authentication(conf)
 
     end
 
+    kong.log.debug('Verify roles/scope')
+    
     -- If no roles to verify
-    if not conf.roles and not conf.realm_roles and not conf.client_roles then
+    if not conf.roles and not conf.realm_roles and not conf.client_roles and not conf.scope then
+        kong.log.debug('No roles/scope to verify')
         return true
+    end
+
+    -- Verify scope
+    if conf.scope ~= nil and jwt.claims.scope ~= nil then
+        for _, scope_pattern in pairs(conf.scope) do
+            if string.find(jwt.claims.scope, scope_pattern) then
+                return true
+            end
+        end
     end
 
     -- Verify roles

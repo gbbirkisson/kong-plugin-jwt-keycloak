@@ -4,7 +4,6 @@ from tests.utils import *
 class TestIssuers(unittest.TestCase):
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @authenticate()
@@ -13,7 +12,6 @@ class TestIssuers(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': [
             'http://localhost:8080/auth/realms/not_found',
             'http://localhost:8080/auth/realms/master'
@@ -25,7 +23,6 @@ class TestIssuers(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': [
             'http://localhost:8080/auth/realms/not_found'
         ]

@@ -4,7 +4,6 @@ from tests.utils import *
 class TestRoles(unittest.TestCase):
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master']
     })
     @authenticate()
@@ -14,7 +13,6 @@ class TestRoles(unittest.TestCase):
 
     @skip("New keycloak handles roles differently")
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['test_role']
     })
@@ -24,7 +22,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['not_found']
     })
@@ -36,7 +33,6 @@ class TestRoles(unittest.TestCase):
 
     @skip("New keycloak handles roles differently")
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['test_role', 'not_found']
     })
@@ -46,7 +42,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'realm_roles': ['uma_authorization']
     })
@@ -56,7 +51,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'realm_roles': ['not_found']
     })
@@ -67,7 +61,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual('Access token does not have the required scope/role', body.get('message'))
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'realm_roles': ['uma_authorization', 'not_found']
     })
@@ -77,7 +70,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['account:manage-account']
     })
@@ -87,7 +79,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['account:manage-something-else']
     })
@@ -98,7 +89,6 @@ class TestRoles(unittest.TestCase):
         self.assertEqual('Access token does not have the required scope/role', body.get('message'))
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['account:manage-account', 'account:manage-something-else']
     })
@@ -108,12 +98,39 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(OK, status)
 
     @create_api({
-        'consumer_match': False,
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'client_roles': ['user:do-user-stuff']
     })
     @authenticate()
     @call_api()
     def test_client_roles_auth(self, status, body):
+        self.assertEqual(FORBIDDEN, status)
+        self.assertEqual('Access token does not have the required scope/role', body.get('message'))
+
+    @create_api({
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
+        'scope': ['email']
+    })
+    @authenticate()
+    @call_api()
+    def test_client_scope(self, status, body):
+        self.assertEqual(OK, status)
+
+    @create_api({
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
+        'scope': ['email', 'not_found']
+    })
+    @authenticate()
+    @call_api()
+    def test_client_scope_double(self, status, body):
+        self.assertEqual(OK, status)
+
+    @create_api({
+        'allowed_iss': ['http://localhost:8080/auth/realms/master'],
+        'scope': ['not_found']
+    })
+    @authenticate()
+    @call_api()
+    def test_client_scope_rainy(self, status, body):
         self.assertEqual(FORBIDDEN, status)
         self.assertEqual('Access token does not have the required scope/role', body.get('message'))
