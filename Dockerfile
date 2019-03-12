@@ -5,7 +5,9 @@ FROM kong:${KONG_VERSION} as builder
 RUN apk --no-cache add zip
 WORKDIR /tmp
 
-COPY . /tmp
+COPY ./*.rockspec /tmp
+COPY ./LICENSE /tmp/LICENSE
+COPY ./src /tmp/src
 ARG PLUGIN_VERSION
 RUN luarocks make && luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 
