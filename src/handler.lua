@@ -4,6 +4,12 @@ local jwt_decoder = require "kong.plugins.jwt.jwt_parser"
 local socket = require "socket"
 local keycloak_keys = require("kong.plugins.jwt-keycloak.keycloak_keys")
 
+local validate_issuer = require("kong.plugins.jwt-keycloak.validators.issuers").validate_issuer
+local validate_scope = require("kong.plugins.jwt-keycloak.validators.scope").validate_scope
+local validate_roles = require("kong.plugins.jwt-keycloak.validators.roles").validate_roles
+local validate_realm_roles = require("kong.plugins.jwt-keycloak.validators.roles").validate_realm_roles
+local validate_client_roles = require("kong.plugins.jwt-keycloak.validators.roles").validate_client_roles
+
 local re_gmatch = ngx.re.gmatch
 
 local JwtKeycloakHandler = BasePlugin:extend()
@@ -194,6 +200,33 @@ local function validate_signature(conf, jwt, second_call)
     return kong.response.exit(401, { message = "Invalid token signature" })
 end
 
+local function match_consumer(conf, jwt)
+    local consumer, err
+    local consumer_id = jwt.claims[conf.consumer_match_claim]
+
+    if conf.consumer_match_claim_custom_id then
+        consumer_cache_key = "custom_id_key_" .. consumer_id
+        consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer_by_custom_id, consumer_id, true)
+    else
+        consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
+        consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer, consumer_id, true)
+    end
+
+    if err then
+        kong.log.err(err)
+    end
+
+    if not consumer and not conf.consumer_match_ignore_not_found then
+        return false, { status = 401, message = "Unable to find consumer for token" }
+    end
+
+    if consumer then
+        set_consumer(consumer, nil, nil)
+    end
+
+    return true
+end
+
 local function do_authentication(conf)
     -- Retrieve token
     local token, err = retrieve_token(conf)
@@ -239,16 +272,7 @@ local function do_authentication(conf)
     end
 
     -- Verify that the issuer is allowed
-    local iss_allowed = false
-    if conf.allowed_iss then
-        for k, v in pairs(conf.allowed_iss) do
-            if string.match(v, "^" .. jwt.claims.iss .. "$") then
-                iss_allowed = true
-            end
-        end
-    end
-
-    if not iss_allowed then
+    if not validate_issuer(conf.allowed_iss, jwt.claims) then
         return false, { status = 401, message = "Token issuer not allowed" }
     end
 
@@ -259,97 +283,31 @@ local function do_authentication(conf)
 
     -- Match consumer
     if conf.consumer_match then
-        local consumer, err
-        local consumer_id = jwt.claims[conf.consumer_match_claim]
-
-        if conf.consumer_match_claim_custom_id then
-            consumer_cache_key = "custom_id_key_" .. consumer_id
-            consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer_by_custom_id, consumer_id, true)
-        else
-            consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
-            consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer, consumer_id, true)
+        ok, err = match_consumer(conf, jwt)
+        if not ok then
+            return ok, err
         end
-
-        if err then
-            kong.log.err(err)
-        end
-
-        if not consumer and not conf.consumer_match_ignore_not_found then
-            return false, { status = 401, message = "Unable to find consumer for token" }
-        end
-
-        if consumer then
-            set_consumer(consumer, nil, nil)
-        end
-
     end
 
-    kong.log.debug('Verify roles/scope')
-    
-    -- If no roles to verify
-    if not conf.roles and not conf.realm_roles and not conf.client_roles and not conf.scope then
-        kong.log.debug('No roles/scope to verify')
+    -- If no roles/scope to verify
+    if not conf.scope and not conf.roles and not conf.realm_roles and not conf.client_roles then        
         return true
     end
 
-    -- Verify scope
-    if conf.scope ~= nil and jwt.claims.scope ~= nil then
-        for _, scope_pattern in pairs(conf.scope) do
-            if string.find(jwt.claims.scope, scope_pattern) then
-                return true
-            end
-        end
+    if conf.scope and validate_scope(conf.scope, jwt.claims) then
+        return true
     end
 
-    -- Verify roles
-    if conf.roles ~= nil and jwt.claims ~= nil and jwt.claims.resource_access ~= nil and jwt.claims.resource_access[jwt.claims.azp] ~= nil and jwt.claims.resource_access[jwt.claims.azp].roles ~= nil then
-        local t_roles = jwt.claims.resource_access[jwt.claims.azp].roles
-
-        for k, v in pairs(t_roles) do
-            for _, role_pattern in pairs(conf.roles) do
-                if string.match(v, "^" .. role_pattern .. "$") then
-                    return true
-                end
-            end
-        end
+    if conf.realm_roles and validate_realm_roles(conf.realm_roles, jwt.claims) then
+        return true
     end
 
-    -- Verify realm roles
-    if conf.realm_roles ~= nil and jwt.claims ~= nil and jwt.claims.realm_access ~= nil and jwt.claims.realm_access.roles ~= nil then
-        local r_roles = jwt.claims.realm_access.roles
-
-        for k, v in pairs(r_roles) do
-            for _, role_pattern in pairs(conf.realm_roles) do
-                if string.match(v, "^" .. role_pattern .. "$") then
-                    return true
-                end
-            end
-        end
+    if conf.roles and validate_roles(conf.roles, jwt.claims) then
+        return true
     end
 
-    -- Verify client roles
-    if conf.client_roles ~= nil and jwt.claims ~= nil and jwt.claims.resource_access ~= nil then
-        local cli_roles = jwt.claims.resource_access
-
-        -- Iterate over 'resource_access' object in token
-        for t_client, t_obj in pairs(cli_roles) do
-            -- Iterate over provided client roles
-            for _, role_pattern in pairs(conf.client_roles) do
-                -- Split client roles into client name and client role
-                for c_name, c_roles in string.gmatch(role_pattern, "(%S+):(%S+)") do
-                    -- If client name matches provided client name
-                    if string.match(t_client, c_name) then
-                        -- Iterate over token client roles
-                        for k, v in pairs(t_obj.roles) do
-                            -- Try to match token role to provided role
-                            if v == c_roles then
-                                return true
-                            end
-                        end
-                    end
-                end
-            end
-        end
+    if conf.client_roles and validate_client_roles(conf.client_roles, jwt.claims) then
+        return true
     end
 
     return false, { status = 403, message = "Access token does not have the required scope/role" }
