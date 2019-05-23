@@ -2,7 +2,7 @@ UNIT_TEST_IMAGE:=jwt-keycloak-unit-test-image
 INTE_TEST_IMAGE:=jwt-keycloak-inte-test-image
 
 _build-unit-test-image:
-	@docker build -t ${UNIT_TEST_IMAGE} --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} -f unit_tests/Dockerfile ..
+	@docker build -t ${UNIT_TEST_IMAGE} --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} --build-arg KONG_VERSION=${KONG_VERSION} -f unit_tests/Dockerfile ..
 
 _tests-unit: _build-unit-test-image
 	@docker run -it --rm --net=host -v ${PWD}:/jwt-keycloak:ro ${UNIT_TEST_IMAGE}

@@ -2,12 +2,12 @@ include makefiles/*.mk
 
 REPOSITORY?=gbbirkisson
 IMAGE?=kong-plugin-jwt-keycloak
-KONG_VERSION?=1.0
+KONG_VERSION?=1.1.2
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${KONG_VERSION}
 
-PLUGIN_VERSION?=1.0.1-1
+PLUGIN_VERSION?=1.0.2-1
 
-TEST_VERSIONS?=1.0.0 1.0.1 1.0.2 1.0.3 1.1rc1
+TEST_VERSIONS?=1.0.3 1.1.2
 
 ### Docker ###
 
@@ -40,7 +40,7 @@ test-unit:
 	@echo "Running unit tests"
 	@echo
 
-	@cd tests && $(MAKE) --no-print-directory _tests-unit PLUGIN_VERSION=${PLUGIN_VERSION}
+	@cd tests && $(MAKE) --no-print-directory _tests-unit PLUGIN_VERSION=${PLUGIN_VERSION} KONG_VERSION=${KONG_VERSION}
 
 	@echo
 	@echo "Unit tests passed"

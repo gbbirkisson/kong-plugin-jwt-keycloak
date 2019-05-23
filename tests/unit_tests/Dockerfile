@@ -1,4 +1,4 @@
-FROM ubuntu
+FROM ubuntu:18.04
 
 # Install openresty and luarocks
 RUN apt-get update -y && apt-get install -yqq wget software-properties-common
@@ -7,12 +7,14 @@ RUN add-apt-repository -y "deb http://openresty.org/package/ubuntu $(lsb_release
 RUN apt-get update -y && apt-get install -yqq openresty luarocks
 
 # Install dependencies for rocks to be installed
-RUN apt-get install -yqq git libssl-dev m4 # for cqueues
+RUN apt-get install -yqq git libssl-dev m4 libyaml-dev
 RUN git config --global url.https://github.com/.insteadOf git://github.com/
 
 # Install kong and busted
-RUN luarocks install kong
 RUN luarocks install busted
+
+ARG KONG_VERSION
+RUN luarocks install kong ${KONG_VERSION}-0
 
 # Install plugin
 COPY ./*.rockspec /tmp

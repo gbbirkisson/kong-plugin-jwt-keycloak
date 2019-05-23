@@ -40,10 +40,17 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 
 | Kong Version |   Tests passing    |
 | ------------ | :----------------: |
-| Kong 0.13.x  |        :x:         |
-| Kong 0.14.x  |        :x:         |
-| Kong 1.0.x   | :white_check_mark: |
-| Kong 1.1.rc1 | :white_check_mark: |
+| 0.13.x       |        :x:         |
+| 0.14.x       |        :x:         |
+| 1.0.x        | :white_check_mark: |
+| 1.1.x        | :white_check_mark: |
+
+| Keycloak Version |   Tests passing    |
+| ---------------- | :----------------: |
+| 3.X.X            | :white_check_mark: |
+| 4.X.X            | :white_check_mark: |
+| 5.X.X            | :white_check_mark: |
+| 6.X.X            | :white_check_mark: |
 
 ## Installation
 
@@ -118,10 +125,10 @@ curl -X POST http://localhost:8001/plugins \
 | config.uri_param_names                 | no      | `jwt`             | A list of querystring parameters that Kong will inspect to retrieve JWTs.                                                                                                                                                                                                                                                                                                                |
 | config.cookie_names                    | no      |                   | A list of cookie names that Kong will inspect to retrieve JWTs.                                                                                                                                                                                                                                                                                                                          |
 | config.claims_to_verify                | no      | `exp`             | A list of registered claims (according to [RFC 7519](https://tools.ietf.org/html/rfc7519)) that Kong can verify as well. Accepted values: `exp`, `nbf`.                                                                                                                                                                                                                                  |
-| config.anonymous                       | no      |                   | An optional string (consumer uuid) value to use as an “anonymous” consumer if authentication fails. If empty (default), the request will fail with an authentication failure `4xx`. Please note that this value must refer to the Consumer `id` attribute which is internal to Kong, and not its `custom_id`.                                                                          |
+| config.anonymous                       | no      |                   | An optional string (consumer uuid) value to use as an “anonymous” consumer if authentication fails. If empty (default), the request will fail with an authentication failure `4xx`. Please note that this value must refer to the Consumer `id` attribute which is internal to Kong, and not its `custom_id`.                                                                            |
 | config.run_on_preflight                | no      | `true`            | A boolean value that indicates whether the plugin should run (and try to authenticate) on `OPTIONS` preflight requests, if set to false then `OPTIONS` requests will always be allowed.                                                                                                                                                                                                  |
 | config.maximum_expiration              | no      | `0`               | An integer limiting the lifetime of the JWT to `maximum_expiration` seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, `exp` must be specified as well in the `claims_to_verify` property. The default value of `0` represents an indefinite period. Potential clock skew should be considered when configuring this value. |
-| config.algorithm                       | no      | `RS256`           | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`.                                                                                                                                                                                                                                                                              |
+| config.algorithm                       | no      | `RS256`           | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`.                                                                                                                                                                                                                                                                               |
 | config.allowed_iss                     | yes     |                   | A list of allowed issuers for this route/service/api.                                                                                                                                                                                                                                                                                                                                    |
 | config.iss_key_grace_period            | no      | `10`              | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin.                                                                                                                    |
 | config.well_known_template             | false   | *see description* | A string template that the well known endpoint for keycloak is created from. String formatting is applied on the template and `%s` is replaced by the issuer of the token. Default value is `%s/.well-known/openid-configuration`                                                                                                                                                        |

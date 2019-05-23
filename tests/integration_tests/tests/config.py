@@ -22,3 +22,7 @@ r = requests.post(KC_REALM + "/protocol/openid-connect/token", data={
 
 assert r.status_code == 200
 KC_ADMIN_TOKEN = r.json()['access_token']
+
+r = requests.get(KC_HOST + '/admin/serverinfo', headers={'Authorization': 'Bearer ' + KC_ADMIN_TOKEN})
+assert r.status_code == 200
+KC_VERSION = r.json()['systemInfo']['version']

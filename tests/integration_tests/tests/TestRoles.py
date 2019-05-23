@@ -11,7 +11,7 @@ class TestRoles(unittest.TestCase):
     def test_no_auth(self, status, body):
         self.assertEqual(OK, status)
 
-    @skip("New keycloak handles roles differently")
+    @skip("Need to update tests")
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['test_role']
@@ -19,6 +19,8 @@ class TestRoles(unittest.TestCase):
     @authenticate()
     @call_api()
     def test_roles_auth(self, status, body):
+        if not KC_VERSION.startswith('3'):
+            self.skipTest("Test not supported for " + KC_VERSION)
         self.assertEqual(OK, status)
 
     @create_api({
@@ -31,7 +33,7 @@ class TestRoles(unittest.TestCase):
         self.assertEqual(FORBIDDEN, status)
         self.assertEqual('Access token does not have the required scope/role', body.get('message'))
 
-    @skip("New keycloak handles roles differently")
+    @skip("Need to update tests")
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'roles': ['test_role', 'not_found']
@@ -39,6 +41,8 @@ class TestRoles(unittest.TestCase):
     @authenticate()
     @call_api()
     def test_roles_auth_double(self, status, body):
+        if not KC_VERSION.startswith('3'):
+            self.skipTest("Test not supported for " + KC_VERSION)
         self.assertEqual(OK, status)
 
     @create_api({
@@ -114,6 +118,8 @@ class TestRoles(unittest.TestCase):
     @authenticate()
     @call_api()
     def test_client_scope(self, status, body):
+        if KC_VERSION.startswith('3'):
+            self.skipTest("Test not supported for " + KC_VERSION)
         self.assertEqual(OK, status)
 
     @create_api({
@@ -123,6 +129,8 @@ class TestRoles(unittest.TestCase):
     @authenticate()
     @call_api()
     def test_client_scope_double(self, status, body):
+        if KC_VERSION.startswith('3'):
+            self.skipTest("Test not supported for " + KC_VERSION)
         self.assertEqual(OK, status)
 
     @create_api({

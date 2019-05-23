@@ -1,4 +1,4 @@
-FROM kong:1.0 as packer
+FROM kong:1.1.2 as builder
 
 ENV LUAROCKS_MODULE=kong-plugin-jwt-keycloak
 
@@ -7,10 +7,10 @@ RUN apk add --no-cache git zip && \
     luarocks install ${LUAROCKS_MODULE} && \
     luarocks pack ${LUAROCKS_MODULE}
 
-FROM kong:1.0
+FROM kong:1.1.2
 
 ENV KONG_PLUGINS="bundled,jwt-keycloak"
 
-COPY --from=packer kong-plugin-jwt-keycloak* /tmp/
-RUN luarocks install /tmp/kong-plugin-jwt-keycloak* &&\
+COPY --from=builder kong-plugin-jwt-keycloak* /tmp/
+RUN luarocks install /tmp/kong-plugin-jwt-keycloak* && \
     rm /tmp/*
