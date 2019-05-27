@@ -1,4 +1,4 @@
-local http = require "socket.http"
+local https = require "ssl.https"
 local cjson_safe = require "cjson.safe"
 local convert = require "kong.plugins.jwt-keycloak.key_conversion"
 
@@ -38,7 +38,7 @@ local function get_request(url, port)
     local err
 
     local chunks = {}
-    res, status = http.request{
+    res, status = https.request{
         url = url,
         port = port,
         sink = ltn12.sink.table(chunks)
