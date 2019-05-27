@@ -10,7 +10,7 @@ describe("Keycloak key conversion", function()
     local issuer = "http://localhost:8080/auth/realms/master"
 
     res1, err1 = get_issuer_keys(get_wellknown_endpoint(well_known_template, issuer))
-    res2, err2 = get_request(issuer)
+    res2, err2 = get_request(issuer, "http")
     
     assert.same(res2['public_key'], res1[1])
   end)
@@ -22,7 +22,7 @@ describe("Keycloak key conversion", function()
     res1, err1 = get_issuer_keys(get_wellknown_endpoint(well_known_template, issuer))
 
     assert.same(nil, res1)
-    assert.same('Failed calling url http://localhost:8080/auth/realms/does_not_exist/.well-known/openid-configuration', err1)
+    assert.same('Failed calling url http://localhost:8080/auth/realms/does_not_exist/.well-known/openid-configuration response status 404', err1)
   end)
 
   it("should fail on bad issuer", function()
@@ -31,7 +31,7 @@ describe("Keycloak key conversion", function()
     res1, err1 = get_issuer_keys(get_wellknown_endpoint(well_known_template, issuer))
 
     assert.same(nil, res1)
-    assert.same('Failed calling url http://localhost:8081/auth/realms/does_not_exist/.well-known/openid-configuration', err1)
+    assert.same('Failed calling url http://localhost:8081/auth/realms/does_not_exist/.well-known/openid-configuration response status closed', err1)
   end)
 
 end)
