@@ -305,6 +305,7 @@ local function do_authentication(conf)
     end
 
     if ok then
+        kong.ctx.shared.jwt_keycloak_token = jwt
         return true
     end
 
