@@ -14,8 +14,17 @@ local re_gmatch = ngx.re.gmatch
 
 local JwtKeycloakHandler = BasePlugin:extend()
 
-JwtKeycloakHandler.PRIORITY = 1005
-JwtKeycloakHandler.VERSION = "1.0.0"
+local priority_env_var = "JWT_KEYCLOAK_PRIORITY"
+local priority
+if os.getenv(priority_env_var) then
+    priority = tonumber(os.getenv(priority_env_var))
+else
+    priority = 1005
+end
+kong.log.debug('JWT_KEYCLOAK_PRIORITY: ' .. priority)
+
+JwtKeycloakHandler.PRIORITY = priority
+JwtKeycloakHandler.VERSION = "1.1.0"
 
 function table_to_string(tbl)
     local result = ""

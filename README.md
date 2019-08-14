@@ -31,6 +31,7 @@ If you have any suggestion or comments, please feel free to open an issue on thi
     - [Globally](#globally)
   - [Parameters](#parameters)
   - [Example](#example)
+  - [Caveats](#caveats)
 - [Testing](#testing)
   - [Setup before tests](#setup-before-tests)
   - [Running tests](#running-tests)
@@ -184,6 +185,10 @@ curl -H "Authorization: Bearer ${ACCESS_TOKEN}" http://localhost:8000/ \
 ```
 
 This should give you the response: `plugin=working`
+
+### Caveats
+
+To verify token issuers, this plugin needs to be able to access the `<ISSUER_REALM_URL>/.well-known/openid-configuration` and `<ISSUER_REALM_URL>/protocol/openid-connect/certs` endpoints of keycloak. If you are getting the error `{ "message": "Unable to get public key for issuer" }` it is probably because for some reason the plugin is unable to access these endpoints.
 
 ## Testing
 

@@ -31,7 +31,7 @@ class TestRoles(unittest.TestCase):
     @call_api()
     def test_roles_auth_rainy(self, status, body):
         self.assertEqual(FORBIDDEN, status)
-        self.assertEqual('Access token does not have the required scope/role', body.get('message'))
+        self.assertEqual('Access token does not have the required scope/role: Missing required role', body.get('message'))
 
     @skip("Need to update tests")
     @create_api({
@@ -62,7 +62,7 @@ class TestRoles(unittest.TestCase):
     @call_api()
     def test_realm_roles_auth_rainy(self, status, body):
         self.assertEqual(FORBIDDEN, status)
-        self.assertEqual('Access token does not have the required scope/role', body.get('message'))
+        self.assertEqual('Access token does not have the required scope/role: Missing required realm role', body.get('message'))
 
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
@@ -90,7 +90,7 @@ class TestRoles(unittest.TestCase):
     @call_api()
     def test_client_roles_auth_rainy(self, status, body):
         self.assertEqual(FORBIDDEN, status)
-        self.assertEqual('Access token does not have the required scope/role', body.get('message'))
+        self.assertEqual('Access token does not have the required scope/role: Missing required role', body.get('message'))
 
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
@@ -109,7 +109,7 @@ class TestRoles(unittest.TestCase):
     @call_api()
     def test_client_roles_auth(self, status, body):
         self.assertEqual(FORBIDDEN, status)
-        self.assertEqual('Access token does not have the required scope/role', body.get('message'))
+        self.assertEqual('Access token does not have the required scope/role: Missing required role', body.get('message'))
 
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
@@ -141,4 +141,4 @@ class TestRoles(unittest.TestCase):
     @call_api()
     def test_client_scope_rainy(self, status, body):
         self.assertEqual(FORBIDDEN, status)
-        self.assertEqual('Access token does not have the required scope/role', body.get('message'))
+        self.assertEqual('Access token does not have the required scope/role: Missing required scope', body.get('message'))
