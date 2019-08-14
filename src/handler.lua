@@ -289,28 +289,27 @@ local function do_authentication(conf)
         end
     end
 
-    -- If no roles/scope to verify
-    if not conf.scope and not conf.roles and not conf.realm_roles and not conf.client_roles then        
+    -- Verify roles or scopes
+    local ok, err = validate_scope(conf.scope, jwt.claims)
+
+    if ok then
+        ok, err = validate_realm_roles(conf.realm_roles, jwt.claims)
+    end
+
+    if ok then
+        ok, err = validate_roles(conf.roles, jwt.claims)
+    end
+
+    if ok then
+        ok, err = validate_client_roles(conf.client_roles, jwt.claims)
+    end
+
+    if ok then
+        kong.ctx.shared.jwt_keycloak_token = jwt
         return true
     end
 
-    if conf.scope and validate_scope(conf.scope, jwt.claims) then
-        return true
-    end
-
-    if conf.realm_roles and validate_realm_roles(conf.realm_roles, jwt.claims) then
-        return true
-    end
-
-    if conf.roles and validate_roles(conf.roles, jwt.claims) then
-        return true
-    end
-
-    if conf.client_roles and validate_client_roles(conf.client_roles, jwt.claims) then
-        return true
-    end
-
-    return false, { status = 403, message = "Access token does not have the required scope/role" }
+    return false, { status = 403, message = "Access token does not have the required scope/role: " .. err }
 end
 
 
