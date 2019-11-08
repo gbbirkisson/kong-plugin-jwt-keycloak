@@ -1,0 +1,50 @@
+version: "3.1"
+
+services:
+  kong-migrate:
+    build: ./kong
+    network_mode: host
+    environment:
+      KONG_PG_HOST: localhost
+      KONG_PG_DATABASE: mydb
+      KONG_PG_USER: myuser
+      KONG_PG_PASSWORD: mypass
+    command: "kong migrations bootstrap"
+
+  kong:
+    build: ./kong
+    restart: always
+    network_mode: host
+    environment:
+      KONG_PG_HOST: localhost
+      KONG_PG_DATABASE: mydb
+      KONG_PG_USER: myuser
+      KONG_PG_PASSWORD: mypass
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_LOG_LEVEL: debug
+      KONG_ADMIN_ERROR_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stdout
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+
+  keycloak:
+    image: jboss/keycloak:7.0.1
+    environment:
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    ports:
+      - 8080:8080
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+    ports:
+      - 5432:5432
+
+  echo:
+    image: gcr.io/kubernetes-e2e-test-images/echoserver:2.1
+    ports:
+      - 9000:8080
