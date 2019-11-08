@@ -2,18 +2,18 @@ include makefiles/*.mk
 
 REPOSITORY?=gbbirkisson
 IMAGE?=kong-plugin-jwt-keycloak
-KONG_VERSION?=1.1.2 # TODO: 1.2.1
+KONG_VERSION?=1.4.0
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${KONG_VERSION}
 
-PLUGIN_VERSION?=1.0.3-1 # TODO: 1.1.0-1
+PLUGIN_VERSION?=1.1.0-1
 
-TEST_VERSIONS?=1.0.3 1.1.2 1.2.1
+TEST_VERSIONS?=1.0.3 1.1.3 1.2.1 1.3.0 1.4.0
 
 ### Docker ###
 
 build:
 	@echo "Building image ..."
-	docker build -q -t ${FULL_IMAGE_NAME} --build-arg KONG_VERSION=${KONG_VERSION} --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} .
+	docker build --pull -q -t ${FULL_IMAGE_NAME} --build-arg KONG_VERSION=${KONG_VERSION} --build-arg PLUGIN_VERSION=${PLUGIN_VERSION} .
 
 run: build
 	docker run -it --rm ${FULL_IMAGE_NAME} kong start --vv
