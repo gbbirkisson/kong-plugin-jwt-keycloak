@@ -23,6 +23,7 @@ If you have any suggestion or comments, please feel free to open an issue on thi
     - [Packing the rock](#packing-the-rock)
     - [Installing the rock](#installing-the-rock)
   - [Enabling plugin](#enabling-plugin)
+  - [Changing plugin priority](#changing-plugin-priority)
   - [Examples](#examples)
 - [Usage](#usage)
   - [Enabling on endpoints](#enabling-on-endpoints)
@@ -45,6 +46,9 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 | 0.14.x       |        :x:         |
 | 1.0.x        | :white_check_mark: |
 | 1.1.x        | :white_check_mark: |
+| 1.2.x        | :white_check_mark: |
+| 1.3.x        | :white_check_mark: |
+| 1.4.x        | :white_check_mark: |
 
 | Keycloak Version |   Tests passing    |
 | ---------------- | :----------------: |
@@ -52,6 +56,7 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 | 4.X.X            | :white_check_mark: |
 | 5.X.X            | :white_check_mark: |
 | 6.X.X            | :white_check_mark: |
+| 7.X.X            | :white_check_mark: |
 
 ## Installation
 
@@ -66,7 +71,7 @@ luarocks install kong-plugin-jwt-keycloak
 #### Packing the rock
 
 ```bash
-export PLUGIN_VERSION=1.0.0-1
+export PLUGIN_VERSION=1.1.0-1
 luarocks make
 luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 ```
@@ -74,13 +79,17 @@ luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 #### Installing the rock
 
 ```bash
-export PLUGIN_VERSION=1.0.0-1
+export PLUGIN_VERSION=1.1.0-1
 luarocks install jwt-keycloak-${PLUGIN_VERSION}.all.rock
 ```
 
 ### Enabling plugin
 
 Set enabled kong enabled plugins, i.e. with environmental variable: `KONG_PLUGINS="bundled,jwt-keycloak"`
+
+### Changing plugin priority
+
+In some cases you might want to change the execution priority of the plugin. You can do that by setting an environmental variable: `JWT_KEYCLOAK_PRIORITY="900"`
 
 ### Examples
 
