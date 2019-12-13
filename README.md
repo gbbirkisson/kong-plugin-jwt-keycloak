@@ -57,6 +57,7 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 | 5.X.X            | :white_check_mark: |
 | 6.X.X            | :white_check_mark: |
 | 7.X.X            | :white_check_mark: |
+| 8.X.X            | :white_check_mark: |
 
 ## Installation
 
