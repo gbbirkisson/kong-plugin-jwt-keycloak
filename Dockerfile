@@ -2,6 +2,9 @@
 ARG KONG_VERSION
 FROM kong:${KONG_VERSION} as builder
 
+# Root needed to install dependencies
+USER root
+
 RUN apk --no-cache add zip
 WORKDIR /tmp
 
@@ -17,6 +20,9 @@ FROM kong:${KONG_VERSION}
 ENV KONG_PLUGINS="bundled,jwt-keycloak"
 
 COPY --from=builder /tmp/*.rock /tmp/
+
+# Root needed for installing plugin
+USER root
 
 ARG PLUGIN_VERSION
 RUN luarocks install /tmp/kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.all.rock && rm /tmp/*
