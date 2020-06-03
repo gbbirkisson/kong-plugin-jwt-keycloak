@@ -50,7 +50,7 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 | 1.3.x        | :white_check_mark: |
 | 1.4.x        | :white_check_mark: |
 | 1.5.x        | :white_check_mark: |
-| 2.0.x        |        :x:         |
+| 2.0.x        | :white_check_mark: |
 
 | Keycloak Version |   Tests passing    |
 | ---------------- | :----------------: |

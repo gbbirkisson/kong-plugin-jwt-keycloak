@@ -84,7 +84,7 @@ def create_api(config, expected_response=CREATED):
             })
             assert r.status_code == expected_response
             kwargs['api_endpoint'] = KONG_API + "/" + api_name
-            time.sleep(0.5)
+            time.sleep(1)
             result = func(*args, **kwargs)
             return result
 
