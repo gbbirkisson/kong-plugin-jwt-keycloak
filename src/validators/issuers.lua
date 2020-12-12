@@ -6,7 +6,7 @@ local function validate_issuer(allowed_issuers, jwt_claims)
         return nil, "Missing issuer claim"
     end
     for _, curr_iss in pairs(allowed_issuers) do
-        if curr_iss == jwt_claims.iss then
+        if curr_iss == jwt_claims.iss or string.match(jwt_claims.iss, curr_iss) ~= nil then
             return true
         end
     end
