@@ -7,9 +7,11 @@ local function validate_scope(allowed_scopes, jwt_claims)
         return nil, "Missing required scope claim"
     end
 
-    for _, curr_scope in pairs(allowed_scopes) do
-        if string.find(jwt_claims.scope, curr_scope) then
-            return true
+    for scope in string.gmatch(jwt_claims.scope, "%S+") do
+        for _, curr_scope in pairs(allowed_scopes) do
+            if scope == curr_scope then
+                return true
+            end
         end
     end
     return nil, "Missing required scope"
