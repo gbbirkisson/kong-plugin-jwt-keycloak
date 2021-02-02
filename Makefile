@@ -2,12 +2,12 @@ include makefiles/*.mk
 
 REPOSITORY?=gbbirkisson
 IMAGE?=kong-plugin-jwt-keycloak
-KONG_VERSION?=2.0.4
+KONG_VERSION?=2.3.1
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${KONG_VERSION}
 
 PLUGIN_VERSION?=1.1.0-1
 
-TEST_VERSIONS?=1.0.4 1.1.3 1.2.3 1.3.1 1.4.3 1.5.1
+TEST_VERSIONS?=1.1.3 1.2.3 1.3.1 1.4.3 1.5.1 2.0.5 2.1.4 2.2.0
 
 ### Docker ###
 

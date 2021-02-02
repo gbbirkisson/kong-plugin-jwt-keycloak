@@ -42,17 +42,20 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 
 ## Tested and working for
 
-| Kong Version |   Tests passing    |
-| ------------ | :----------------: |
-| 0.13.x       |        :x:         |
-| 0.14.x       |        :x:         |
-| 1.0.x        | :white_check_mark: |
-| 1.1.x        | :white_check_mark: |
-| 1.2.x        | :white_check_mark: |
-| 1.3.x        | :white_check_mark: |
-| 1.4.x        | :white_check_mark: |
-| 1.5.x        | :white_check_mark: |
-| 2.0.x        | :white_check_mark: |
+| Kong Version |     Tests passing      |
+| ------------ | :--------------------: |
+| 0.13.x       |          :x:           |
+| 0.14.x       |          :x:           |
+| 1.0.x        |   :white_check_mark:   |
+| 1.1.x        |   :white_check_mark:   |
+| 1.2.x        |   :white_check_mark:   |
+| 1.3.x        |   :white_check_mark:   |
+| 1.4.x        |   :white_check_mark:   |
+| 1.5.x        |   :white_check_mark:   |
+| 2.0.x        |   :white_check_mark:   |
+| 2.1.x        |   :white_check_mark:   |
+| 2.2.x        |   :white_check_mark:   |
+| 2.3.x        | :x: Unit tests failing |
 
 | Keycloak Version |   Tests passing    |
 | ---------------- | :----------------: |
@@ -64,6 +67,8 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 | 8.X.X            | :white_check_mark: |
 | 9.X.X            | :white_check_mark: |
 | 10.X.X           | :white_check_mark: |
+| 11.X.X           | :white_check_mark: |
+| 12.X.X           | :white_check_mark: |
 
 ## Installation
 
@@ -146,7 +151,7 @@ curl -X POST http://localhost:8001/plugins \
 | config.run_on_preflight                | no      | `true`            | A boolean value that indicates whether the plugin should run (and try to authenticate) on `OPTIONS` preflight requests, if set to false then `OPTIONS` requests will always be allowed.                                                                                                                                                                                                  |
 | config.maximum_expiration              | no      | `0`               | An integer limiting the lifetime of the JWT to `maximum_expiration` seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, `exp` must be specified as well in the `claims_to_verify` property. The default value of `0` represents an indefinite period. Potential clock skew should be considered when configuring this value. |
 | config.algorithm                       | no      | `RS256`           | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`.                                                                                                                                                                                                                                                                               |
-| config.allowed_iss                     | yes     |                   | A list of allowed issuers for this route/service/api. Can be specified as a `string` or as a [Pattern](http://lua-users.org/wiki/PatternsTutorial).                                                                                                                                                                                                                                                                                                                                   |
+| config.allowed_iss                     | yes     |                   | A list of allowed issuers for this route/service/api. Can be specified as a `string` or as a [Pattern](http://lua-users.org/wiki/PatternsTutorial).                                                                                                                                                                                                                                      |
 | config.iss_key_grace_period            | no      | `10`              | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin.                                                                                                                    |
 | config.well_known_template             | false   | *see description* | A string template that the well known endpoint for keycloak is created from. String formatting is applied on the template and `%s` is replaced by the issuer of the token. Default value is `%s/.well-known/openid-configuration`                                                                                                                                                        |
 | config.scope                           | no      |                   | A list of scopes the token must have to access the api, i.e. `["email"]`. The token only has to have one of the listed scopes to be authorized.                                                                                                                                                                                                                                          |

@@ -25,4 +25,4 @@ COPY --from=builder /tmp/*.rock /tmp/
 USER root
 
 ARG PLUGIN_VERSION
-RUN luarocks install /tmp/kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.all.rock && rm /tmp/*
+RUN luarocks install /tmp/kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.all.rock

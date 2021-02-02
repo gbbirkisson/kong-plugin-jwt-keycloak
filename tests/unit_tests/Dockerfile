@@ -1,13 +1,13 @@
 FROM ubuntu:18.04
 
 # Install openresty and luarocks
-RUN apt-get update -y && apt-get install -yqq wget software-properties-common
+RUN apt-get update -y && apt-get install -yqq wget software-properties-common build-essential
 RUN wget -qO - https://openresty.org/package/pubkey.gpg | apt-key add -
 RUN add-apt-repository -y "deb http://openresty.org/package/ubuntu $(lsb_release -sc) main"
 RUN apt-get update -y && apt-get install -yqq openresty luarocks
 
 # Install dependencies for rocks to be installed
-RUN apt-get install -yqq git libssl-dev m4 libyaml-dev
+RUN apt-get install -yqq git libssl-dev m4 libyaml-dev zlib1g-dev
 RUN git config --global url.https://github.com/.insteadOf git://github.com/
 
 # Install kong and busted
