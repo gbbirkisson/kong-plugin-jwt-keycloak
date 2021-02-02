@@ -53,5 +53,13 @@ describe("Validator", function()
             )
             assert.same(true, valid)
         end)
+
+        it("handle matching issuer", function()
+            local valid, err = validate_issuer(
+                {"http://keycloak%-headless/auth/realms/.+"}, 
+                test_claims
+            )
+            assert.same(true, valid)
+        end)
     end)
 end)

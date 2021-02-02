@@ -32,3 +32,13 @@ class TestIssuers(unittest.TestCase):
     def test_allow_all_iss_rainy(self, status, body):
         self.assertEqual(UNAUTHORIZED, status)
         self.assertEqual('Token issuer not allowed', body.get('message'))
+
+    @create_api({
+        'allowed_iss': [
+            'http://localhost:8080/auth/realms/.*'
+        ]
+    })
+    @authenticate()
+    @call_api()
+    def test_allow_all_iss_rainy(self, status, body):
+        self.assertEqual(OK, status)
