@@ -1,6 +1,8 @@
 <h1>Kong plugin jwt-keycloak</h1>
 
-> **Attention**: I will no longer be maintaining this plugin. Thanks for all the positive feedback and interest in this project. Feel free to fork and keep it alive. Cheers!
+> **:warning: No longer maintained!**
+> 
+> I will no longer be maintaining this plugin. Thanks for all the positive feedback and interest in this project. Feel free to fork and keep it alive. Cheers!
 
 A plugin for the [Kong Microservice API Gateway](https://konghq.com/solutions/gateway/) to validate access tokens issued by [Keycloak](https://www.keycloak.org/). It uses the [Well-Known Uniform Resource Identifiers](https://tools.ietf.org/html/rfc5785) provided by [Keycloak](https://www.keycloak.org/) to load [JWK](https://tools.ietf.org/html/rfc7517) public keys from issuers that are specifically allowed for each endpoint.
 
