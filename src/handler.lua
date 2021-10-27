@@ -26,6 +26,26 @@ kong.log.debug('JWT_KEYCLOAK_PRIORITY: ' .. priority)
 JwtKeycloakHandler.PRIORITY = priority
 JwtKeycloakHandler.VERSION = "1.1.0"
 
+local function get_consumer_custom_id_cache_key(custom_id)
+  return "custom_id_key_" .. custom_id
+end
+
+local function invalidate_customer(data)
+  local customer = data.entity
+  if data.operation == "update" then
+      customer = data.old_entity
+  end
+
+  local key = get_consumer_custom_id_cache_key(customer.custom_id)
+  kong.cache:invalidate(key)
+end
+
+function JwtKeycloakHandler:init_worker()
+  JwtKeycloakHandler.super.init_worker(self)
+
+  kong.worker_events.register(invalidate_customer, "crud", "consumers")
+end
+
 function table_to_string(tbl)
     local result = ""
     for k, v in pairs(tbl) do
@@ -168,7 +188,7 @@ local function get_keys(well_known_endpoint)
     for i, key in ipairs(keys) do
         decoded_keys[i] = jwt_decoder:base64_decode(key)
     end
-    
+
     kong.log.debug('Number of keys retrieved: ' .. table.getn(decoded_keys))
     return {
         keys = decoded_keys,
@@ -178,7 +198,7 @@ end
 
 local function validate_signature(conf, jwt, second_call)
     local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
-    
+
     well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
     -- Retrieve public keys
     local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, well_known_endpoint, true)
@@ -214,7 +234,7 @@ local function match_consumer(conf, jwt)
     local consumer_id = jwt.claims[conf.consumer_match_claim]
 
     if conf.consumer_match_claim_custom_id then
-        consumer_cache_key = "custom_id_key_" .. consumer_id
+        consumer_cache_key = get_consumer_custom_id_cache_key(consumer_id)
         consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer_by_custom_id, consumer_id, true)
     else
         consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
