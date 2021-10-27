@@ -27,23 +27,24 @@ JwtKeycloakHandler.PRIORITY = priority
 JwtKeycloakHandler.VERSION = "1.1.0"
 
 local function get_consumer_custom_id_cache_key(custom_id)
-  return "custom_id_key_" .. custom_id
+    return "custom_id_key_" .. custom_id
 end
 
 local function invalidate_customer(data)
-  local customer = data.entity
-  if data.operation == "update" then
-      customer = data.old_entity
-  end
+    local customer = data.entity
+    if data.operation == "update" then
+        customer = data.old_entity
+    end
 
-  local key = get_consumer_custom_id_cache_key(customer.custom_id)
-  kong.cache:invalidate(key)
+    local key = get_consumer_custom_id_cache_key(customer.custom_id)
+    kong.log.info("invalidating customer " .. key)
+    kong.cache:invalidate(key)
 end
 
 function JwtKeycloakHandler:init_worker()
-  JwtKeycloakHandler.super.init_worker(self)
+    JwtKeycloakHandler.super.init_worker(self)
 
-  kong.worker_events.register(invalidate_customer, "crud", "consumers")
+    kong.worker_events.register(invalidate_customer, "crud", "consumers")
 end
 
 function table_to_string(tbl)
@@ -146,6 +147,7 @@ local function set_consumer(consumer, credential, token)
     end
 
     if consumer and consumer.custom_id then
+        kong.log.debug("found consumer " .. consumer.custom_id)
         set_header(constants.HEADERS.CONSUMER_CUSTOM_ID, consumer.custom_id)
     else
         clear_header(constants.HEADERS.CONSUMER_CUSTOM_ID)
@@ -246,7 +248,8 @@ local function match_consumer(conf, jwt)
     end
 
     if not consumer and not conf.consumer_match_ignore_not_found then
-        return false, { status = 401, message = "Unable to find consumer for token" }
+        kong.log.warn("Unable to find consumer " .. consumer_id .." for token")
+        return false, { status = 401, message = "Unable to find consumer " .. consumer_id .." for token" }
     end
 
     if consumer then
