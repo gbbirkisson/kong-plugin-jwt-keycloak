@@ -37,7 +37,7 @@ local function invalidate_customer(data)
     end
 
     local key = get_consumer_custom_id_cache_key(customer.custom_id)
-    kong.log.info("invalidating customer " .. key)
+    kong.log.debug("invalidating customer " .. key)
     kong.cache:invalidate(key)
 end
 
@@ -179,14 +179,14 @@ local function set_consumer(consumer, credential, token)
     end
 end
 
-local function get_keys(well_known_endpoint)
+local function get_keys(well_known_endpoint, cafile)
     kong.log.debug('Getting public keys from keycloak')
-    keys, err = keycloak_keys.get_issuer_keys(well_known_endpoint)
+    local keys, err = keycloak_keys.get_issuer_keys(well_known_endpoint, cafile)
     if err then
         return nil, err
     end
 
-    decoded_keys = {}
+    local decoded_keys = {}
     for i, key in ipairs(keys) do
         decoded_keys[i] = jwt_decoder:base64_decode(key)
     end
@@ -201,9 +201,9 @@ end
 local function validate_signature(conf, jwt, second_call)
     local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
 
-    well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
+    local well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
     -- Retrieve public keys
-    local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, well_known_endpoint, true)
+    local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, well_known_endpoint, conf.cafile)
 
     if not public_keys then
         if err then
@@ -221,7 +221,7 @@ local function validate_signature(conf, jwt, second_call)
     end
 
     -- We could not validate signature, try to get a new keyset?
-    since_last_update = socket.gettime() - public_keys.updated_at
+    local since_last_update = socket.gettime() - public_keys.updated_at
     if not second_call and since_last_update > conf.iss_key_grace_period then
         kong.log.debug('Could not validate signature. Keys updated last ' .. since_last_update .. ' seconds ago')
         kong.cache:invalidate_local(issuer_cache_key)
@@ -236,10 +236,10 @@ local function match_consumer(conf, jwt)
     local consumer_id = jwt.claims[conf.consumer_match_claim]
 
     if conf.consumer_match_claim_custom_id then
-        consumer_cache_key = get_consumer_custom_id_cache_key(consumer_id)
+        local consumer_cache_key = get_consumer_custom_id_cache_key(consumer_id)
         consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer_by_custom_id, consumer_id, true)
     else
-        consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
+        local consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
         consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer, consumer_id, true)
     end
 
@@ -248,7 +248,7 @@ local function match_consumer(conf, jwt)
     end
 
     if not consumer and not conf.consumer_match_ignore_not_found then
-        kong.log.warn("Unable to find consumer " .. consumer_id .." for token")
+        kong.log.debug("Unable to find consumer " .. consumer_id .." for token")
         return false, { status = 401, message = "Unable to find consumer " .. consumer_id .." for token" }
     end
 
@@ -315,7 +315,7 @@ local function do_authentication(conf)
 
     -- Match consumer
     if conf.consumer_match then
-        ok, err = match_consumer(conf, jwt)
+        local ok, err = match_consumer(conf, jwt)
         if not ok then
             return ok, err
         end

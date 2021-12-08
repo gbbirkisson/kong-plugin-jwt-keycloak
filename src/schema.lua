@@ -28,6 +28,7 @@ return {
           { consumer_match_claim = { type = "string", default = "azp" }, },
           { consumer_match_claim_custom_id = { type = "boolean", default = false }, },
           { consumer_match_ignore_not_found = { type = "boolean", default = false }, },
+          { cafile = { type = "string" }, },
         },
       },
     },
