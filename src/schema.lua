@@ -10,7 +10,7 @@ return {
           { uri_param_names = { type = "set", elements = { type = "string" }, default = { "jwt" }, }, },
           { cookie_names = { type = "set", elements = { type = "string" }, default = {} }, },
           { claims_to_verify = { type = "set", elements = { type = "string", one_of = { "exp", "nbf" }, }, default = { "exp" } }, },
-          { anonymous = { type = "string", uuid = true, legacy = true }, },
+          { anonymous = { type = "string", uuid = true }, },
           { run_on_preflight = { type = "boolean", default = true }, },
           { maximum_expiration = { type = "number", default = 0, between = { 0, 31536000 }, }, },
           { algorithm = { type = "string", default = "RS256" }, },

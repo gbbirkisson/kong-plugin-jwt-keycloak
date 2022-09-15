@@ -1,6 +1,6 @@
 package = "kong-plugin-jwt-keycloak"
 
-version = "1.1.0-1"
+version = "1.1.1-0"
 -- The version '0.1.0' is the source code version, the trailing '1' is the version of this rockspec.
 -- whenever the source version changes, the rockspec should be reset to 1. The rockspec version is only
 -- updated (incremented) when this file changes, but the source remains the same.
@@ -9,12 +9,12 @@ local pluginName = package:match("^kong%-plugin%-(.+)$")  -- "jwt-keycloak"
 supported_platforms = {"linux", "macosx"}
 
 source = {
-  url = "git://github.com/gbbirkisson/kong-plugin-jwt-keycloak",
-  tag = "v1.1.0",
+  url = "git://github.com/hanfi/kong-plugin-jwt-keycloak",
+  tag = "v1.1.1",
 }
 description = {
   summary = "A Kong plugin that will validate tokens issued by keycloak",
-  homepage = "https://github.com/gbbirkisson/kong-plugin-jwt-keycloak",
+  homepage = "https://github.com/hanfi/kong-plugin-jwt-keycloak",
   license = "Apache 2.0"
 }
 dependencies = {
