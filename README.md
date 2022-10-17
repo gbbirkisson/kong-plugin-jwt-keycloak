@@ -1,8 +1,6 @@
 <h1>Kong plugin jwt-keycloak</h1>
 
-> **:warning: No longer maintained!**
-> 
-> I will no longer be maintaining this plugin. Thanks for all the positive feedback and interest in this project. Feel free to fork and keep it alive. Cheers!
+> Originally created by [Guðmundur Björn Birkisson](https://github.com/gbbirkisson) forked by the Cox Automotive Combustible Lemons team to modify this for use with our Okta client grant workflows.
 
 A plugin for the [Kong Microservice API Gateway](https://konghq.com/solutions/gateway/) to validate access tokens issued by [Keycloak](https://www.keycloak.org/). It uses the [Well-Known Uniform Resource Identifiers](https://tools.ietf.org/html/rfc5785) provided by [Keycloak](https://www.keycloak.org/) to load [JWK](https://tools.ietf.org/html/rfc7517) public keys from issuers that are specifically allowed for each endpoint.
 
@@ -46,38 +44,15 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 
 | Kong Version |   Tests passing    |
 | ------------ | :----------------: |
-| 0.13.x       |        :x:         |
-| 0.14.x       |        :x:         |
-| 1.0.x        | :white_check_mark: |
-| 1.1.x        | :white_check_mark: |
-| 1.2.x        | :white_check_mark: |
-| 1.3.x        | :white_check_mark: |
-| 1.4.x        | :white_check_mark: |
-| 1.5.x        | :white_check_mark: |
-| 2.0.x        | :white_check_mark: |
-| 2.1.x        | :white_check_mark: |
-| 2.2.x        | :white_check_mark: |
-| 2.3.x        | :white_check_mark: |
+| 2.8.1        | :white_check_mark: |
 
-| Keycloak Version |   Tests passing    |
-| ---------------- | :----------------: |
-| 3.X.X            | :white_check_mark: |
-| 4.X.X            | :white_check_mark: |
-| 5.X.X            | :white_check_mark: |
-| 6.X.X            | :white_check_mark: |
-| 7.X.X            | :white_check_mark: |
-| 8.X.X            | :white_check_mark: |
-| 9.X.X            | :white_check_mark: |
-| 10.X.X           | :white_check_mark: |
-| 11.X.X           | :white_check_mark: |
-| 12.X.X           | :white_check_mark: |
 
 ## Installation
 
 ### Using luarocks
 
 ```bash
-luarocks install kong-plugin-jwt-keycloak
+luarocks install kong-plugin-cads-jwt-keycloak
 ```
 
 ### From source
@@ -85,15 +60,15 @@ luarocks install kong-plugin-jwt-keycloak
 #### Packing the rock
 
 ```bash
-export PLUGIN_VERSION=1.1.0-1
+export PLUGIN_VERSION=1.0.0-1
 luarocks make
-luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
+luarocks pack kong-plugin-cads-jwt-keycloak ${PLUGIN_VERSION}
 ```
 
 #### Installing the rock
 
 ```bash
-export PLUGIN_VERSION=1.1.0-1
+export PLUGIN_VERSION=1.0.0-1
 luarocks install jwt-keycloak-${PLUGIN_VERSION}.all.rock
 ```
 
@@ -156,6 +131,7 @@ curl -X POST http://localhost:8001/plugins \
 | config.allowed_iss                     | yes     |                   | A list of allowed issuers for this route/service/api. Can be specified as a `string` or as a [Pattern](http://lua-users.org/wiki/PatternsTutorial).                                                                                                                                                                                                                                      |
 | config.iss_key_grace_period            | no      | `10`              | An integer that sets the number of seconds until public keys for an issuer can be updated after writing new keys to the cache. This is a guard so that the Kong cache will not invalidate every time a token signed with an invalid public key is sent to the plugin.                                                                                                                    |
 | config.well_known_template             | false   | *see description* | A string template that the well known endpoint for keycloak is created from. String formatting is applied on the template and `%s` is replaced by the issuer of the token. Default value is `%s/.well-known/openid-configuration`                                                                                                                                                        |
+| config.scope_claim                     | no      | `scope`           | A string to identify which jwt claim contains your scopes for authorization, i.e. `["scope"]` or `[scp]`.                                                                                                                                                                                                                                           |
 | config.scope                           | no      |                   | A list of scopes the token must have to access the api, i.e. `["email"]`. The token only has to have one of the listed scopes to be authorized.                                                                                                                                                                                                                                          |
 | config.roles                           | no      |                   | A list of roles of current client the token must have to access the api, i.e. `["uma_protection"]`. The token only has to have one of the listed roles to be authorized.                                                                                                                                                                                                                 |
 | config.realm_roles                     | no      |                   | A list of realm roles (`realm_access`) the token must have to access the api, i.e. `["offline_access"]`. The token only has to have one of the listed roles to be authorized.                                                                                                                                                                                                            |

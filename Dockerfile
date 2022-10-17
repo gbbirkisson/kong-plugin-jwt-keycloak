@@ -12,7 +12,7 @@ COPY ./*.rockspec /tmp
 COPY ./LICENSE /tmp/LICENSE
 COPY ./src /tmp/src
 ARG PLUGIN_VERSION
-RUN luarocks make && luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
+RUN luarocks make && luarocks pack kong-plugin-cads-jwt-keycloak ${PLUGIN_VERSION}
 
 ## Create Image
 FROM kong:${KONG_VERSION}
@@ -25,4 +25,4 @@ COPY --from=builder /tmp/*.rock /tmp/
 USER root
 
 ARG PLUGIN_VERSION
-RUN luarocks install /tmp/kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.all.rock
+RUN luarocks install /tmp/kong-plugin-cads-jwt-keycloak-${PLUGIN_VERSION}.all.rock
