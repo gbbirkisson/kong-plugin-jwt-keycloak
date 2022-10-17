@@ -57,7 +57,9 @@ class TestBasics(unittest.TestCase):
         self.assertEqual('Token claims invalid: ["exp"]="token expired"', body.get('message'))
 
     @create_api({
-        'allowed_iss': ['http://localhost:8080/auth/realms/NOT_FOUND']
+        'allowed_iss': ['http://localhost:8080/auth/realms/NOT_FOUND'],
+        'claims_to_verify': [],
+        'maximum_expiration': 0
     })
     @call_api(token=NOT_FOUND_JWT)
     def test_invalid_iss(self, status, body):
@@ -70,8 +72,8 @@ class TestBasics(unittest.TestCase):
     })
     @call_api(token=LONG_LASTING)
     def test_max_exp(self, status, body):
-        self.assertEqual(FORBIDDEN, status)
-        self.assertEqual('Token claims invalid: ["exp"]="exceeds maximum allowed expiration"', body.get('message'))
+        self.assertEqual(UNAUTHORIZED, status)
+        self.assertEqual('Token claims invalid: ["exp"]="token expired"', body.get('message'))
 
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master']

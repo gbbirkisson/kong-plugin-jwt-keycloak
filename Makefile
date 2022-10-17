@@ -2,12 +2,12 @@ include makefiles/*.mk
 
 REPOSITORY?=gbbirkisson
 IMAGE?=kong-plugin-jwt-keycloak
-KONG_VERSION?=2.3.2
+KONG_VERSION?=2.8.1
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${KONG_VERSION}
 
-PLUGIN_VERSION?=1.1.0-1
+PLUGIN_VERSION?=1.0.0-1
 
-TEST_VERSIONS?=1.1.3 1.2.3 1.3.1 1.4.3 1.5.1 2.0.5 2.1.4 2.2.0 2.3.2
+TEST_VERSIONS?=2.8.1
 
 ### Docker ###
 
@@ -27,7 +27,7 @@ push: build test
 ### LuaRocks ###
 
 upload:
-	luarocks upload kong-plugin-jwt-keycloak-${PLUGIN_VERSION}.rockspec --api-key=${API_KEY}
+	luarocks upload kong-plugin-cads-jwt-keycloak-${PLUGIN_VERSION}.rockspec --api-key=${API_KEY}
 
 ### Testing ###
 

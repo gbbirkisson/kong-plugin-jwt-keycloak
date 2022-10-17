@@ -1,7 +1,7 @@
 FROM alpine:3.12
 
 ENV LUA_VERSION=5.1.5
-ENV LUAROCKS_VERSION=3.4.0
+ENV LUAROCKS_VERSION=3.8.0
 ENV OPENRESTY_PUB_KEY="http://openresty.org/package/admin@openresty.com-5ea678a6.rsa.pub"
 
 # Install dependencies

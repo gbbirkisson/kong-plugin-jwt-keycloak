@@ -299,7 +299,7 @@ local function do_authentication(conf)
     end
 
     -- Verify roles or scopes
-    local ok, err = validate_scope(conf.scope, jwt.claims)
+    local ok, err = validate_scope(conf.scope_claim, conf.scope, jwt.claims)
 
     if ok then
         ok, err = validate_realm_roles(conf.realm_roles, jwt.claims)
