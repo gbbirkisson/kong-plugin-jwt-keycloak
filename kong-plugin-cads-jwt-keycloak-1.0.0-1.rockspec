@@ -10,7 +10,7 @@ supported_platforms = {"linux", "macosx"}
 
 source = {
   url = "git://github.com/CADSCombustibleLemons/kong-plugin-cads-jwt-keycloak",
-  tag = "v1.0.0",
+  tag = "1.0.0",
 }
 description = {
   summary = "A Kong plugin that will validate tokens issued by keycloak",
