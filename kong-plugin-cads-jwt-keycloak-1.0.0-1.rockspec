@@ -9,12 +9,12 @@ local pluginName = package:match("^kong%-plugin%-cads%-(.+)$")  -- "jwt-keycloak
 supported_platforms = {"linux", "macosx"}
 
 source = {
-  url = "git://github.com/CADSCombustibleLemons/kong-plugin-jwt-keycloak",
+  url = "git://github.com/CADSCombustibleLemons/kong-plugin-cads-jwt-keycloak",
   tag = "v1.0.0",
 }
 description = {
   summary = "A Kong plugin that will validate tokens issued by keycloak",
-  homepage = "https://github.com/CADSCombustibleLemons/kong-plugin-jwt-keycloak.git",
+  homepage = "https://github.com/CADSCombustibleLemons/kong-plugin-cads-jwt-keycloak.git",
   license = "Apache 2.0"
 }
 dependencies = {
