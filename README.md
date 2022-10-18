@@ -230,10 +230,10 @@ The steps to publish the plugin are as follows:
 ```
 make test
 ```
-1. Commit code and merge to master then create a github release 
 1. Make a new rockspec file matching your target version, with updated version and tag.
 1. Update the [handler's version](src/handler.lua#l27)
 1. Update the [Makefiles's version](Makefile#l8)
+1. Commit code, merge to master, then create a github release 
 1. export your luarocks api key to the environment:
 ```
 export API_KEY=<BLAH>
