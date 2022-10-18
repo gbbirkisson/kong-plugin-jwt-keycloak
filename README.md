@@ -39,6 +39,8 @@ If you have any suggestion or comments, please feel free to open an issue on thi
   - [Setup before tests](#setup-before-tests)
   - [Running tests](#running-tests)
   - [Useful debug commands](#useful-debug-commands)
+- [Publishing](#publishing)
+
 
 ## Tested and working for
 
@@ -221,3 +223,22 @@ make kong-log # For proxy logs
 make kong-err-proxy # For proxy error logs
 make kong-err-admin # For admin error logs
 ```
+
+## Publishing
+The steps to publish the plugin are as follows:
+1. Run tests
+```
+make test
+```
+1. Commit code and merge to master then create a github release 
+1. Make a new rockspec file matching your target version, with updated version and tag.
+1. Update the [handler's version](src/handler.lua#l27)
+1. Update the [Makefiles's version](Makefile#l8)
+1. export your luarocks api key to the environment:
+```
+export API_KEY=<BLAH>
+```
+1. Publish
+```
+make publish
+``` 
