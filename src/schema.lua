@@ -19,7 +19,7 @@ return {
           { iss_key_grace_period = { type = "number", default = 10, between = { 1, 60 }, }, },
           { well_known_template = { type = "string", default = "%s/.well-known/openid-configuration" }, },
           
-          { scope_claim = { type = "string", default = "scp" }, },
+          { scope_claim = { type = "string", default = "scope" }, },
           { scope = { type = "set", elements = { type = "string" }, default = nil }, },
           { roles = { type = "set", elements = { type = "string" }, default = nil }, },
           { realm_roles = { type = "set", elements = { type = "string" }, default = nil }, },
