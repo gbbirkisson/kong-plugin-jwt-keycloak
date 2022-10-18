@@ -19,12 +19,12 @@ local priority
 if os.getenv(priority_env_var) then
     priority = tonumber(os.getenv(priority_env_var))
 else
-    priority = 1005
+    priority = 900
 end
 kong.log.debug('JWT_KEYCLOAK_PRIORITY: ' .. priority)
 
 JwtKeycloakHandler.PRIORITY = priority
-JwtKeycloakHandler.VERSION = "1.1.0"
+JwtKeycloakHandler.VERSION = "1.0.1"
 
 function table_to_string(tbl)
     local result = ""
