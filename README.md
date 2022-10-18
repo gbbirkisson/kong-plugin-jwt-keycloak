@@ -240,5 +240,5 @@ export API_KEY=<BLAH>
 ```
 1. Publish
 ```
-make publish
+make upload
 ``` 
