@@ -11,8 +11,6 @@ local validate_client_roles = require("kong.plugins.jwt-keycloak.validators.role
 
 local re_gmatch = ngx.re.gmatch
 
-
-
 local priority_env_var = "JWT_KEYCLOAK_PRIORITY"
 local priority
 if os.getenv(priority_env_var) then
@@ -91,10 +89,6 @@ local function retrieve_token(conf)
             return m[1]
         end
     end
-end
-
-function JwtKeycloakHandler:new()
-    JwtKeycloakHandler.super.new(self, "jwt-keycloak")
 end
 
 local function load_consumer(consumer_id, anonymous)
@@ -324,7 +318,6 @@ end
 
 
 function JwtKeycloakHandler:access(conf)
-    JwtKeycloakHandler.super.access(self)
 
     -- check if preflight request and whether it should be authenticated
     if not conf.run_on_preflight and kong.request.get_method() == "OPTIONS" then
