@@ -1,8 +1,8 @@
 local function dump(o)
     if type(o) == 'table' then
        local s = ''
-       for k,v in pairs(o) do
-          if type(k) ~= 'number' then k = '"'..k..'"' end
+       for _, v in pairs(o) do
+          --if type(k) ~= 'number' then k = '"'..k..'"' end
           s = s .. dump(v) .. ' '
        end
        return s
@@ -22,6 +22,8 @@ local function validate_scope(scope_claim, allowed_scopes, jwt_claims)
     end
 
     local claimed_scopes = dump(jwt_claims[scope_claim])
+
+    kong.service.request.add_header("x-consumer-scopes", claimed_scopes:sub(1,-2):gsub(" ", ","))
 
     for scope in string.gmatch(claimed_scopes, "%S+") do
         for _, curr_scope in pairs(allowed_scopes) do
