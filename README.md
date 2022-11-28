@@ -62,7 +62,7 @@ luarocks install kong-plugin-cads-jwt-keycloak
 #### Packing the rock
 
 ```bash
-export PLUGIN_VERSION=1.0.0-1
+export PLUGIN_VERSION=1.1.0-1
 luarocks make
 luarocks pack kong-plugin-cads-jwt-keycloak ${PLUGIN_VERSION}
 ```
@@ -70,8 +70,8 @@ luarocks pack kong-plugin-cads-jwt-keycloak ${PLUGIN_VERSION}
 #### Installing the rock
 
 ```bash
-export PLUGIN_VERSION=1.0.0-1
-luarocks install jwt-keycloak-${PLUGIN_VERSION}.all.rock
+export PLUGIN_VERSION=1.1.0-1
+luarocks install kong-plugin-cads-jwt-keycloak-${PLUGIN_VERSION}.all.rock
 ```
 
 ### Enabling plugin
