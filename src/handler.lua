@@ -73,7 +73,13 @@ local function retrieve_token(conf)
         end
     end
 
-    local authorization_header = kong.request.get_header("authorization")
+    local authorization_header = nil
+    if conf.access_token_header == nil then
+        authorization_header = kong.request.get_header("authorization")
+    else
+        authorization_header = kong.request.get_header(conf.access_token_header)
+    end
+    
     if authorization_header then
         local iterator, iter_err = re_gmatch(authorization_header, "\\s*[Bb]earer\\s+(.+)")
         if not iterator then
