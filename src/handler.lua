@@ -24,7 +24,7 @@ end
 kong.log.debug('JWT_KEYCLOAK_PRIORITY: ' .. priority)
 
 JwtKeycloakHandler.PRIORITY = priority
-JwtKeycloakHandler.VERSION = "1.0.1"
+JwtKeycloakHandler.VERSION = "1.2.0"
 
 function table_to_string(tbl)
     local result = ""
@@ -181,7 +181,7 @@ local function validate_signature(conf, jwt, second_call)
     
     well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
     -- Retrieve public keys
-    local public_keys, err = kong.cache:get(issuer_cache_key, nil, get_keys, well_known_endpoint, true)
+    local public_keys, err = kong.cache:get(issuer_cache_key, {ttl = 600}, get_keys, well_known_endpoint, true)
 
     if not public_keys then
         if err then
@@ -215,10 +215,10 @@ local function match_consumer(conf, jwt)
 
     if conf.consumer_match_claim_custom_id then
         consumer_cache_key = "custom_id_key_" .. consumer_id
-        consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer_by_custom_id, consumer_id, true)
+        consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer_by_custom_id, consumer_id, true)
     else
         consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
-        consumer, err = kong.cache:get(consumer_cache_key, nil, load_consumer, consumer_id, true)
+        consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer, consumer_id, true)
     end
 
     if err then
@@ -341,7 +341,7 @@ function JwtKeycloakHandler:access(conf)
         if conf.anonymous then
             -- get anonymous user
             local consumer_cache_key = kong.db.consumers:cache_key(conf.anonymous)
-            local consumer, err      = kong.cache:get(consumer_cache_key, nil,
+            local consumer, err      = kong.cache:get(consumer_cache_key, {ttl = 60},
                                                     load_consumer,
                                                     conf.anonymous, true)
             if err then
