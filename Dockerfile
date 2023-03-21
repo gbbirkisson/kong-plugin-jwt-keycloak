@@ -10,7 +10,7 @@ WORKDIR /tmp
 
 COPY ./*.rockspec /tmp
 COPY ./LICENSE /tmp/LICENSE
-COPY ./src /tmp/src
+COPY ./kong/plugins /tmp/kong/plugins
 ARG PLUGIN_VERSION
 RUN luarocks make && luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 

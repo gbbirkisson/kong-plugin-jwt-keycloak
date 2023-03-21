@@ -1,11 +1,13 @@
-package = "kong-plugin-jwt-keycloak"
+local plugin_name = "jwt-keycloak"
+local package_name = "kong-plugin-" .. plugin_name
+
+package = package_name
 
 version = "1.1.0-1"
 -- The version '0.1.0' is the source code version, the trailing '1' is the version of this rockspec.
 -- whenever the source version changes, the rockspec should be reset to 1. The rockspec version is only
 -- updated (incremented) when this file changes, but the source remains the same.
 
-local pluginName = package:match("^kong%-plugin%-(.+)$")  -- "jwt-keycloak"
 supported_platforms = {"linux", "macosx"}
 
 source = {
@@ -23,12 +25,12 @@ dependencies = {
 build = {
   type = "builtin",
   modules = {
-    ["kong.plugins.jwt-keycloak.validators.issuers"] = "src/validators/issuers.lua",
-    ["kong.plugins.jwt-keycloak.validators.roles"] = "src/validators/roles.lua",
-    ["kong.plugins.jwt-keycloak.validators.scope"] = "src/validators/scope.lua",
-    ["kong.plugins.jwt-keycloak.handler"] = "src/handler.lua",
-    ["kong.plugins.jwt-keycloak.key_conversion"] = "src/key_conversion.lua",
-    ["kong.plugins.jwt-keycloak.keycloak_keys"] = "src/keycloak_keys.lua",
-    ["kong.plugins.jwt-keycloak.schema"]  = "src/schema.lua",
+    ["kong.plugins."..plugin_name..".validators.issuers"] = "kong/plugins/"..plugin_name.."/validators/issuers.lua",
+    ["kong.plugins."..plugin_name..".validators.roles"] = "kong/plugins/"..plugin_name.."/validators/roles.lua",
+    ["kong.plugins."..plugin_name..".validators.scope"] = "kong/plugins/"..plugin_name.."/validators/scope.lua",
+    ["kong.plugins."..plugin_name..".handler"] = "kong/plugins/"..plugin_name.."/handler.lua",
+    ["kong.plugins."..plugin_name..".key_conversion"] = "kong/plugins/"..plugin_name.."/key_conversion.lua",
+    ["kong.plugins."..plugin_name..".keycloak_keys"] = "kong/plugins/"..plugin_name.."/keycloak_keys.lua",
+    ["kong.plugins."..plugin_name..".schema"]  = "kong/plugins/"..plugin_name.."/schema.lua",
   }
 }
