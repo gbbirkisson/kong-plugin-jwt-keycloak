@@ -24,9 +24,9 @@ end
 kong.log.debug('JWT_KEYCLOAK_PRIORITY: ' .. priority)
 
 JwtKeycloakHandler.PRIORITY = priority
-JwtKeycloakHandler.VERSION = "1.2.0"
+JwtKeycloakHandler.VERSION = "1.3.0"
 
-function table_to_string(tbl)
+local function table_to_string(tbl)
     local result = ""
     for k, v in pairs(tbl) do
         -- Check the key type (ignore any numerical keys - assume its an array)
@@ -96,6 +96,58 @@ function JwtKeycloakHandler:new()
     JwtKeycloakHandler.super.new(self, "jwt-keycloak")
 end
 
+local function get_keys(well_known_endpoint)
+    kong.log.debug('Getting public keys from keycloak')
+    local keys, err = keycloak_keys.get_issuer_keys(well_known_endpoint)
+    if err then
+        return nil, err
+    end
+
+    local decoded_keys = {}
+    for i, key in ipairs(keys) do
+        decoded_keys[i] = jwt_decoder:base64_decode(key)
+    end
+    
+    kong.log.debug('Number of keys retrieved: ' .. table.getn(decoded_keys))
+    return {
+        keys = decoded_keys,
+        updated_at = socket.gettime(),
+    }
+end
+
+local function validate_signature(conf, jwt, second_call)
+    local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
+    local well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
+
+    -- Retrieve public keys
+    local public_keys, err = kong.cache:get(issuer_cache_key, {ttl = 600}, get_keys, well_known_endpoint, true)
+
+    if not public_keys then
+        if err then
+            kong.log.err(err)
+        end
+        return kong.response.exit(403, { message = "Unable to get public key for issuer" })
+    end
+
+    -- Verify signatures
+    for _, k in ipairs(public_keys.keys) do
+        if jwt:verify_signature(k) then
+            kong.log.debug('JWT signature verified')
+            return nil
+        end
+    end
+
+    -- We could not validate signature, try to get a new keyset?
+    local since_last_update = socket.gettime() - public_keys.updated_at
+    if not second_call and since_last_update > conf.iss_key_grace_period then
+        kong.log.debug('Could not validate signature. Keys updated last ' .. since_last_update .. ' seconds ago')
+        kong.cache:invalidate_local(issuer_cache_key)
+        return validate_signature(conf, jwt, true)
+    end
+
+    return kong.response.exit(401, { message = "Invalid token signature" })
+end
+
 local function load_consumer(consumer_id, anonymous)
     local result, err = kong.db.consumers:select { id = consumer_id }
     if not result then
@@ -108,10 +160,13 @@ local function load_consumer(consumer_id, anonymous)
 end
 
 local function load_consumer_by_custom_id(custom_id)
+    kong.log.debug('Consumer ' .. custom_id .. "not in cache checking db.")
     local result, err = kong.db.consumers:select_by_custom_id(custom_id)
     if not result then
+        kong.log.debug('Consumer not found in db: ' .. custom_id)
         return nil, err
     end
+    kong.log.debug('Consumer found in db: ' .. result.id)
     return result
 end
 
@@ -157,68 +212,19 @@ local function set_consumer(consumer, credential, token)
     end
 end
 
-local function get_keys(well_known_endpoint)
-    kong.log.debug('Getting public keys from keycloak')
-    keys, err = keycloak_keys.get_issuer_keys(well_known_endpoint)
-    if err then
-        return nil, err
-    end
-
-    decoded_keys = {}
-    for i, key in ipairs(keys) do
-        decoded_keys[i] = jwt_decoder:base64_decode(key)
-    end
-    
-    kong.log.debug('Number of keys retrieved: ' .. table.getn(decoded_keys))
-    return {
-        keys = decoded_keys,
-        updated_at = socket.gettime(),
-    }
-end
-
-local function validate_signature(conf, jwt, second_call)
-    local issuer_cache_key = 'issuer_keys_' .. jwt.claims.iss
-    
-    well_known_endpoint = keycloak_keys.get_wellknown_endpoint(conf.well_known_template, jwt.claims.iss)
-    -- Retrieve public keys
-    local public_keys, err = kong.cache:get(issuer_cache_key, {ttl = 600}, get_keys, well_known_endpoint, true)
-
-    if not public_keys then
-        if err then
-            kong.log.err(err)
-        end
-        return kong.response.exit(403, { message = "Unable to get public key for issuer" })
-    end
-
-    -- Verify signatures
-    for _, k in ipairs(public_keys.keys) do
-        if jwt:verify_signature(k) then
-            kong.log.debug('JWT signature verified')
-            return nil
-        end
-    end
-
-    -- We could not validate signature, try to get a new keyset?
-    since_last_update = socket.gettime() - public_keys.updated_at
-    if not second_call and since_last_update > conf.iss_key_grace_period then
-        kong.log.debug('Could not validate signature. Keys updated last ' .. since_last_update .. ' seconds ago')
-        kong.cache:invalidate_local(issuer_cache_key)
-        return validate_signature(conf, jwt, true)
-    end
-
-    return kong.response.exit(401, { message = "Invalid token signature" })
-end
-
 local function match_consumer(conf, jwt)
-    local consumer, err
+    local consumer, err, consumer_cache_key
     local consumer_id = jwt.claims[conf.consumer_match_claim]
 
-    if conf.consumer_match_claim_custom_id then
-        consumer_cache_key = "custom_id_key_" .. consumer_id
-        consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer_by_custom_id, consumer_id, true)
+    if conf.consumer_match_claim_custom_id then        
+        kong.log.debug('Matching Consumer: ' .. consumer_id)
+        -- consumer_cache_key = "custom_id_key_" .. consumer_id
+        -- consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer_by_custom_id, consumer_id, true)
+        consumer, err = load_consumer_by_custom_id(consumer_id)
     else
-        consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
-        consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer, consumer_id, true)
+        consumer, err = load_consumer(consumer_id)
+        -- consumer_cache_key = kong.db.consumers:cache_key(consumer_id)
+        -- consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer, consumer_id, true)
     end
 
     if err then
@@ -292,7 +298,7 @@ local function do_authentication(conf)
 
     -- Match consumer
     if conf.consumer_match then
-        ok, err = match_consumer(conf, jwt)
+        local ok, err = match_consumer(conf, jwt)
         if not ok then
             return ok, err
         end
@@ -340,10 +346,9 @@ function JwtKeycloakHandler:access(conf)
     if not ok then
         if conf.anonymous then
             -- get anonymous user
-            local consumer_cache_key = kong.db.consumers:cache_key(conf.anonymous)
-            local consumer, err      = kong.cache:get(consumer_cache_key, {ttl = 60},
-                                                    load_consumer,
-                                                    conf.anonymous, true)
+            -- local consumer_cache_key = kong.db.consumers:cache_key(conf.anonymous)
+            -- local consumer, err = kong.cache:get(consumer_cache_key, {ttl = 60}, load_consumer,conf.anonymous, true)
+            local consumer, err = load_consumer(conf.anonymous)
             if err then
                 kong.log.err(err)
                 return kong.response.exit(500, { message = "An unexpected error occurred" })
