@@ -19,12 +19,12 @@ local priority
 if os.getenv(priority_env_var) then
     priority = tonumber(os.getenv(priority_env_var))
 else
-    priority = 900
+    priority = 1000
 end
 kong.log.debug('JWT_KEYCLOAK_PRIORITY: ' .. priority)
 
 JwtKeycloakHandler.PRIORITY = priority
-JwtKeycloakHandler.VERSION = "1.3.0"
+JwtKeycloakHandler.VERSION = "1.4.0"
 
 local function table_to_string(tbl)
     local result = ""
@@ -320,6 +320,11 @@ local function do_authentication(conf)
     end
 
     if ok then
+
+        if conf.hide_credentials then
+            kong.service.request.clear_header("Authorization")
+        end
+
         kong.ctx.shared.jwt_keycloak_token = jwt
         return true
     end
