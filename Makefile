@@ -1,11 +1,10 @@
 include makefiles/*.mk
 
-REPOSITORY?=gbbirkisson
 IMAGE?=kong-plugin-jwt-keycloak
 KONG_VERSION?=2.8.1
-FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${KONG_VERSION}
+FULL_IMAGE_NAME:=${IMAGE}:${KONG_VERSION}
 
-PLUGIN_VERSION?=1.3.0-1
+PLUGIN_VERSION?=1.4.0-1
 
 TEST_VERSIONS?=2.8.1
 
@@ -20,9 +19,6 @@ run: build
 
 exec: build
 	docker run -it --rm ${FULL_IMAGE_NAME} ash
-
-push: build test
-	docker push ${FULL_IMAGE_NAME}
 
 ### LuaRocks ###
 
