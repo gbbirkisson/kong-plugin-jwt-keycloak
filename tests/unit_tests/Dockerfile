@@ -46,7 +46,7 @@ RUN wget -c https://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VER
 # Install kong and busted
 RUN luarocks install busted
 ARG KONG_VERSION
-RUN luarocks install kong ${KONG_VERSION}-0
+RUN luarocks install kong 2.8.1-0
 
 # Install plugin
 COPY ./*.rockspec /tmp

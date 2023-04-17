@@ -1,12 +1,12 @@
 include makefiles/*.mk
 
 IMAGE?=kong-plugin-jwt-keycloak
-KONG_VERSION?=2.8.1
+KONG_VERSION?=2.8.3
 FULL_IMAGE_NAME:=${IMAGE}:${KONG_VERSION}
 
 PLUGIN_VERSION?=1.4.0-1
 
-TEST_VERSIONS?=2.8.1
+TEST_VERSIONS?=2.8.3
 
 ### Docker ###
 
