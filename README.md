@@ -46,7 +46,7 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 
 | Kong Version |   Tests passing    |
 | ------------ | :----------------: |
-| 2.8.1        | :white_check_mark: |
+| 2.8.3        | :white_check_mark: |
 
 
 ## Installation
