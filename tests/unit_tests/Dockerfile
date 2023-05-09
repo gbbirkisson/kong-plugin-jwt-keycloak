@@ -24,7 +24,7 @@ RUN apk add --no-cache \
 RUN wget -O "/etc/apk/keys/$(basename ${OPENRESTY_PUB_KEY})" ${OPENRESTY_PUB_KEY} \
     && echo "http://openresty.org/package/alpine/v3.12/main" >> /etc/apk/repositories \
     && apk update \
-    && apk add --no-cache openresty-resty 
+    && apk add --no-cache openresty-resty
 
 # Install Lua
 RUN wget -c https://www.lua.org/ftp/lua-${LUA_VERSION}.tar.gz -O - | tar -xzf - \
@@ -46,7 +46,7 @@ RUN wget -c https://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VER
 # Install kong and busted
 RUN luarocks install busted
 ARG KONG_VERSION
-RUN luarocks install kong 2.8.1-0
+RUN luarocks install kong ${KONG_VERSION}-0
 
 # Install plugin
 COPY ./*.rockspec /tmp
@@ -54,7 +54,7 @@ COPY ./LICENSE /tmp/LICENSE
 COPY ./src /tmp/src
 WORKDIR /tmp
 ARG PLUGIN_VERSION
-RUN luarocks make 
+RUN luarocks make
 
 # Add custom busted binary
 COPY tests/unit_tests/busted_bin /usr/bin/busted

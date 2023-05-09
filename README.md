@@ -62,7 +62,7 @@ luarocks install kong-plugin-cads-jwt-keycloak
 #### Packing the rock
 
 ```bash
-export PLUGIN_VERSION=1.4.0-1
+export PLUGIN_VERSION=1.5.0-1
 luarocks make
 luarocks pack kong-plugin-cads-jwt-keycloak ${PLUGIN_VERSION}
 ```
@@ -70,7 +70,7 @@ luarocks pack kong-plugin-cads-jwt-keycloak ${PLUGIN_VERSION}
 #### Installing the rock
 
 ```bash
-export PLUGIN_VERSION=1.4.0-1
+export PLUGIN_VERSION=1.5.0-1
 luarocks install kong-plugin-cads-jwt-keycloak-${PLUGIN_VERSION}.all.rock
 ```
 
@@ -157,7 +157,7 @@ curl -X POST http://localhost:8001/services/mockbin-echo/plugins \
     --data "config.allowed_iss=http://localhost:8080/auth/realms/master"
 
 curl -X POST http://localhost:8001/services/mockbin-echo/routes \
-    --data "paths=/" 
+    --data "paths=/"
 ```
 
 Then you can call the API:
@@ -233,7 +233,7 @@ make test
 1. Make a new rockspec file matching your target version, with updated version and tag.
 1. Update the [handler's version](src/handler.lua#l27)
 1. Update the [Makefiles's version](Makefile#l8)
-1. Commit code, merge to master, then create a github release 
+1. Commit code, merge to master, then create a github release
 1. export your luarocks api key to the environment:
 ```
 export API_KEY=<BLAH>
@@ -241,4 +241,4 @@ export API_KEY=<BLAH>
 1. Publish
 ```
 make upload
-``` 
+```
