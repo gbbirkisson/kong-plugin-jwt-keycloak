@@ -1,8 +1,8 @@
 include makefiles/*.mk
 
-REPOSITORY?=gbbirkisson
+REPOSITORY?=telekom-digioss
 IMAGE?=kong-plugin-jwt-keycloak
-KONG_VERSION?=2.3.2
+KONG_VERSION?=2.8.3
 FULL_IMAGE_NAME:=${REPOSITORY}/${IMAGE}:${KONG_VERSION}
 
 PLUGIN_VERSION?=1.1.0-1
@@ -65,7 +65,6 @@ test-all: keycloak-start
 	@set -e; for t in  $(TEST_VERSIONS); do \
 		$(MAKE) --no-print-directory test-unit PLUGIN_VERSION=${PLUGIN_VERSION} KONG_VERSION=$$t ; \
     $(MAKE) --no-print-directory test-integration PLUGIN_VERSION=${PLUGIN_VERSION} KONG_VERSION=$$t KONG_DATABASE=postgres ; \
-		$(MAKE) --no-print-directory test-integration PLUGIN_VERSION=${PLUGIN_VERSION} KONG_VERSION=$$t KONG_DATABASE=cassandra ; \
     done
 	@echo "All test successful"
 

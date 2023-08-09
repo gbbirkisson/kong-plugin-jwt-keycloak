@@ -10,7 +10,6 @@ KONG_DB_NAME:=kong
 KONG_DATABASE?=postgres
 
 POSTGRES_IMAGE:=postgres:11.2-alpine
-CASSANDRA_IMAGE:=cassandra:3.11
 
 wait-for-log:
 	@while ! docker logs ${CONTAINER} | grep -q "${PATTERN}"; do sleep 5; done
@@ -29,21 +28,12 @@ kong-db-create-postgres:
 		 ${POSTGRES_IMAGE}
 	@$(MAKE) --no-print-directory CONTAINER=${KONG_DB_CONTAINER_NAME} PATTERN="database system is ready to accept connections" wait-for-log
 
-kong-db-create-cassandra:
-	@echo "Creating Kong DB"
-	- @docker run --rm -d \
-		--name ${KONG_DB_CONTAINER_NAME} \
-		--net=host \
-		 ${CASSANDRA_IMAGE}
-	@$(MAKE) --no-print-directory CONTAINER=${KONG_DB_CONTAINER_NAME} PATTERN="Starting listening for CQL clients" wait-for-log
-
 kong-db-migrate: build
 	@echo "Migrating Kong DB"
 	@docker run -it --rm \
 		--name ${KONG_CONTAINER_NAME} \
 		--net=host \
 		-e "KONG_DATABASE=${KONG_DATABASE}" \
-		-e "KONG_CASSANDRA_CONTACT_POINTS=localhost" \
 		-e "KONG_PG_HOST=localhost" \
 		-e "KONG_PG_USER=${KONG_DB_USER}" \
 		-e "KONG_PG_PASSWORD=${KONG_DB_PASS}" \
@@ -67,7 +57,6 @@ kong-start: build
         -e "KONG_PROXY_ERROR_LOG=/proxy_error.log" \
         -e "KONG_ADMIN_ERROR_LOG=/admin_error.log" \
 		-e "KONG_DATABASE=${KONG_DATABASE}" \
-		-e "KONG_CASSANDRA_CONTACT_POINTS=localhost" \
 		-e "KONG_PG_HOST=localhost" \
 		-e "KONG_PG_USER=${KONG_DB_USER}" \
 		-e "KONG_PG_PASSWORD=${KONG_DB_PASS}" \

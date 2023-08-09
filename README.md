@@ -232,10 +232,8 @@ make keycloak-start
 ```bash
 make test-unit # Unit tests
 make test-integration # Integration tests with postgres
-make test-integration KONG_DATABASE=cassandra # Integration tests with cassandra
 make test # All test with postgres
-make test KONG_DATABASE=cassandra # All test with cassandra
-make test-all # All test with cassandra and postgres and multiple versions of kong
+make test-all # All test with supported DBMS versions and multiple versions of kong
 ```
 
 ### Useful debug commands
