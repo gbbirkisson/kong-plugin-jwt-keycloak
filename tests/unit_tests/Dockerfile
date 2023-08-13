@@ -1,4 +1,4 @@
-FROM alpine:3.12
+FROM alpine:3.18
 
 ENV LUA_VERSION=5.1.5
 ENV LUAROCKS_VERSION=3.4.0
@@ -8,6 +8,7 @@ ENV OPENRESTY_PUB_KEY="http://openresty.org/package/admin@openresty.com-5ea678a6
 RUN apk add --no-cache \
     ca-certificates \
     openssl \
+    wget \
     curl \
     unzip \
     gcc \
@@ -42,6 +43,10 @@ RUN wget -c https://luarocks.github.io/luarocks/releases/luarocks-${LUAROCKS_VER
     && make install \
     && cd .. \
     && rm -rf luarocks-${LUAROCKS_VERSION}
+
+# Workaround problem with old unencrypted github port 9148
+# in dependencies of old versions of some lua modules
+RUN git config --global url."https://github.com/".insteadOf git://github.com/
 
 # Install kong and busted
 RUN luarocks install busted

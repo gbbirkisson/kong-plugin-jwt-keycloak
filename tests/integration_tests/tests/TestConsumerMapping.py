@@ -4,6 +4,9 @@ from tests.utils import *
 class TestConsumerMapping(unittest.TestCase):
     TMP_CUSTOM_ID = str(uuid.uuid4())
 
+    ############################################################################
+    # Test if plugin sends header "x-consumer-id" to the upstream service
+    # 
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'consumer_match': True
@@ -12,8 +15,13 @@ class TestConsumerMapping(unittest.TestCase):
     @call_api()
     def test_map_consumer(self, status, body):
         self.assertEqual(OK, status)
-        self.assertEqual(1, len([h['value'] for h in body.get('headers') if h['name'] == 'x-consumer-id']))
+        self.assertGreater(len(parse_json_response(parse_json_response(body, "headers"), "x-consumer-id")), 1,
+                           "x-consumer-id seems to be empty but is a must for the request to upstream in case authentication was successfully." )
 
+
+    ############################################################################
+    # Test if plugin sends header "x-consumer-custom-id" to the upstream service
+    # which needs to contain the same value like we have kong configured ...
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'consumer_match': True,
@@ -24,8 +32,15 @@ class TestConsumerMapping(unittest.TestCase):
     def test_map_consumer_custom_id(self, status, body):
         self.assertEqual(OK, status)
         self.assertEqual([self.TMP_CUSTOM_ID],
-                         [h['value'] for h in body.get('headers') if h['name'] == 'x-consumer-custom-id'])
+                         [parse_json_response(parse_json_response(body, "headers"), "x-consumer-custom-id")])
 
+
+    ############################################################################
+    # Test if plugin respects the setting of "consumer_match_ignore_not_found"
+    # and forwards the request also to the upstream service if there is no
+    # user found in kong which is equal with the value of the token claim
+    # "preferred_username"
+    #
     @create_api({
         'allowed_iss': ['http://localhost:8080/auth/realms/master'],
         'consumer_match': True,

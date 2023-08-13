@@ -1,8 +1,18 @@
 <h1>Kong plugin jwt-keycloak</h1>
 
-> **:warning: No longer maintained!**
+> **⚠️ This fork is maintained for a limited set of version combinations**
 > 
-> I will no longer be maintaining this plugin. Thanks for all the positive feedback and interest in this project. Feel free to fork and keep it alive. Cheers!
+> The official author of the plugin no longer maintains it since 24.08.2021  
+> Details see: <https://github.com/gbbirkisson/kong-plugin-jwt-keycloak/blob/master/README.md>
+>
+> We will continue to use this plugin in our project and maintain here this fork for it.  
+> But we do not need backward compatible changes... so we will not test it to be able to work with older versions of kong.
+>
+> Supported version matrix:
+> * kong dependencies of version 2.8.1 .... and higher versions
+> * postgres database of version 12.x ... and higher versions
+> * keycloak versions in the way how redhat-sso contains the versions in their product starting from keycloak 9.0
+
 
 A plugin for the [Kong Microservice API Gateway](https://konghq.com/solutions/gateway/) to validate access tokens issued by [Keycloak](https://www.keycloak.org/). It uses the [Well-Known Uniform Resource Identifiers](https://tools.ietf.org/html/rfc5785) provided by [Keycloak](https://www.keycloak.org/) to load [JWK](https://tools.ietf.org/html/rfc7517) public keys from issuers that are specifically allowed for each endpoint.
 
@@ -44,33 +54,30 @@ If you have any suggestion or comments, please feel free to open an issue on thi
 
 ## Tested and working for
 
-| Kong Version |   Tests passing    |
-| ------------ | :----------------: |
-| 0.13.x       |        :x:         |
-| 0.14.x       |        :x:         |
-| 1.0.x        | :white_check_mark: |
-| 1.1.x        | :white_check_mark: |
-| 1.2.x        | :white_check_mark: |
-| 1.3.x        | :white_check_mark: |
-| 1.4.x        | :white_check_mark: |
-| 1.5.x        | :white_check_mark: |
-| 2.0.x        | :white_check_mark: |
-| 2.1.x        | :white_check_mark: |
-| 2.2.x        | :white_check_mark: |
-| 2.3.x        | :white_check_mark: |
+There are a few limitations about testing combinations:
+* Kong only provides a limited set off their lua code on luarocks  
+  <https://luarocks.org/modules/kong/kong>  
+  for this reason currently only these version combinations can be validated
+* Redhat / Jboss / Keycloak provides also not all latest updates of RHSSO base versions of keycloak
+  <https://quay.io/repository/keycloak/keycloak?tab=tags>  
+  For this reason not the latest patch versions on the contained rhsso product versions can be used for testing  
+  <https://access.redhat.com/solutions/3296901>
 
-| Keycloak Version |   Tests passing    |
-| ---------------- | :----------------: |
-| 3.X.X            | :white_check_mark: |
-| 4.X.X            | :white_check_mark: |
-| 5.X.X            | :white_check_mark: |
-| 6.X.X            | :white_check_mark: |
-| 7.X.X            | :white_check_mark: |
-| 8.X.X            | :white_check_mark: |
-| 9.X.X            | :white_check_mark: |
-| 10.X.X           | :white_check_mark: |
-| 11.X.X           | :white_check_mark: |
-| 12.X.X           | :white_check_mark: |
+| Kong Version       |    Tests passing   |
+| ------------------ | :----------------: |
+| 2.8.1              | ✅ |
+| 3.0.0              | ✅ |
+| 3.1.0              | ✅ |
+| 3.2.2              | ✅ |
+| 3.3.0              | ✅ |
+| 3.4.0              | ✅ |
+
+
+| Keycloak Version   |    Tests passing   |
+| ------------------ | :----------------: |
+| 9.0.3  (RHSSO-7.4) | ✅ |
+| 15.0.2 (RHSSO-7.5) | ✅ |
+| 18.0.2 (RHSSO-7.6) | ✖️ [Issue](https://github.com/telekom-digioss/kong-plugin-jwt-keycloak/issues/5) |
 
 ## Installation
 
@@ -85,7 +92,7 @@ luarocks install kong-plugin-jwt-keycloak
 #### Packing the rock
 
 ```bash
-export PLUGIN_VERSION=1.1.0-1
+export PLUGIN_VERSION=1.3.0-1
 luarocks make
 luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 ```
@@ -93,7 +100,7 @@ luarocks pack kong-plugin-jwt-keycloak ${PLUGIN_VERSION}
 #### Installing the rock
 
 ```bash
-export PLUGIN_VERSION=1.1.0-1
+export PLUGIN_VERSION=1.3.0-1
 luarocks install jwt-keycloak-${PLUGIN_VERSION}.all.rock
 ```
 
@@ -151,6 +158,7 @@ curl -X POST http://localhost:8001/plugins \
 | config.claims_to_verify                | no      | `exp`             | A list of registered claims (according to [RFC 7519](https://tools.ietf.org/html/rfc7519)) that Kong can verify as well. Accepted values: `exp`, `nbf`.                                                                                                                                                                                                                                  |
 | config.anonymous                       | no      |                   | An optional string (consumer uuid) value to use as an “anonymous” consumer if authentication fails. If empty (default), the request will fail with an authentication failure `4xx`. Please note that this value must refer to the Consumer `id` attribute which is internal to Kong, and not its `custom_id`.                                                                            |
 | config.run_on_preflight                | no      | `true`            | A boolean value that indicates whether the plugin should run (and try to authenticate) on `OPTIONS` preflight requests, if set to false then `OPTIONS` requests will always be allowed.                                                                                                                                                                                                  |
+| config.header_names                    | no      | `authorization`   | A list of HTTP header names that Kong will inspect to retrieve JWTs. `OPTIONS` requests will always be allowed.                                                                                                                                                                                                  |
 | config.maximum_expiration              | no      | `0`               | An integer limiting the lifetime of the JWT to `maximum_expiration` seconds in the future. Any JWT that has a longer lifetime will rejected (HTTP 403). If this value is specified, `exp` must be specified as well in the `claims_to_verify` property. The default value of `0` represents an indefinite period. Potential clock skew should be considered when configuring this value. |
 | config.algorithm                       | no      | `RS256`           | The algorithm used to verify the token’s signature. Can be `HS256`, `HS384`, `HS512`, `RS256`, or `ES256`.                                                                                                                                                                                                                                                                               |
 | config.allowed_iss                     | yes     |                   | A list of allowed issuers for this route/service/api. Can be specified as a `string` or as a [Pattern](http://lua-users.org/wiki/PatternsTutorial).                                                                                                                                                                                                                                      |
@@ -171,14 +179,14 @@ Create service and add the plugin to it, and lastly create a route:
 
 ```bash
 curl -X POST http://localhost:8001/services \
-    --data "name=mockbin-echo" \
-    --data "url=http://mockbin.org/echo"
+    --data "name=httpbin-anything" \
+    --data "url=http://localhost:8093/anything"
 
-curl -X POST http://localhost:8001/services/mockbin-echo/plugins \
+curl -X POST http://localhost:8001/services/httpbin-anything/plugins \
     --data "name=jwt-keycloak" \
     --data "config.allowed_iss=http://localhost:8080/auth/realms/master"
 
-curl -X POST http://localhost:8001/services/mockbin-echo/routes \
+curl -X POST http://localhost:8001/services/httpbin-anything/routes \
     --data "paths=/" 
 ```
 

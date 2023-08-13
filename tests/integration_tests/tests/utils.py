@@ -2,14 +2,31 @@ import random
 import time
 import unittest
 import uuid
+import json
 
-from tests.config import *
+import tests.config
+from tests.setup import *
+
+from requests_toolbelt.utils import dump
+from metadict import MetaDict
 
 OK = 200
 CREATED = 201
 NO_CONTENT = 204
 UNAUTHORIZED = 401
 FORBIDDEN = 403
+
+def logging_hook(logtext, *args, **kwargs):
+    data = dump.dump_all(logtext)
+    print(data.decode('utf-8'))
+
+def parse_json_response(jsoninput, searchkey=None):
+    jsoninput_dict = MetaDict(jsoninput)
+    if searchkey is not None:
+        jsoninput_dict_lower_keys = {k.lower():v for k,v in jsoninput_dict.items()}
+        if searchkey.lower() in jsoninput_dict_lower_keys:
+            return jsoninput_dict_lower_keys.get(searchkey.lower())
+    ## TODO: Add handler for non jsoninput and handeled exceptions if searchkey is not found
 
 
 def get_kong_version():
@@ -70,13 +87,18 @@ def create_api(config, expected_response=CREATED):
             api_name = "test" + str(random.randint(1, 1000000))
             r = requests.post(KONG_ADMIN + "/services", data={
                 "name": api_name,
-                "url": "http://mockbin.org/headers"
+                "url": "http://localhost:8093/anything"
             })
             assert r.status_code == CREATED
             r = requests.post(KONG_ADMIN + "/services/" + api_name + "/routes", data={
                 "name": api_name,
                 "paths[]": "/" + api_name
             })
+            # If you face problems in unit tests you can uncomment this line 
+            # to see the raw data
+            # print("--------------------Debugging Start--------------------")
+            # print(logging_hook(r))
+            # print("--------------------Debugging End----------------------")
             assert r.status_code == CREATED
             r = requests.post(KONG_ADMIN + "/services/" + api_name + "/plugins", json={
                 "name": "jwt-keycloak",
@@ -84,7 +106,9 @@ def create_api(config, expected_response=CREATED):
             })
             assert r.status_code == expected_response
             kwargs['api_endpoint'] = KONG_API + "/" + api_name
-            time.sleep(1)
+            # Wait a few seconds until kong has the changed configuration online
+            # (Otherwise http 404 is returned)
+            time.sleep(5)
             result = func(*args, **kwargs)
             return result
 
@@ -93,23 +117,47 @@ def create_api(config, expected_response=CREATED):
     return real_decorator
 
 
-def call_api(token=None, method='get', params=None, endpoint=None):
+def call_api(token=None, method='get', params=None, endpoint=None, authentication_type=None):
     def real_decorator(func):
         def wrapper(*args, **kwargs):
-            if token is not None:
-                headers = {"Authorization": "Bearer " + token}
-            elif kwargs.get('token') is not None:
-                headers = {"Authorization": "Bearer " + kwargs.get('token')}
+            authentication_type_json = json.dumps(authentication_type)
+            if json.dumps(params) is not None:
+                params_dict = json.loads(json.dumps(params))
+
+            # Use Token Header Authentication if no query param is specified
+            if "queryparam" not in authentication_type_json:
+                if token is not None:
+                    headers = {"Authorization": "Bearer " + token}
+                elif kwargs.get('token') is not None:
+                    headers = {"Authorization": "Bearer " + kwargs.get('token')}
+                else:
+                    headers = None
+            # Use query params to add token
             else:
+                authentication_type_dict = json.loads(authentication_type_json)
                 headers = None
+                if params_dict is None:
+                    params_dict = {}
+                if token is not None:
+                    params_dict[authentication_type_dict['queryparam']] = token
+                if kwargs.get('token') is not None:
+                    params_dict[authentication_type_dict['queryparam']] = kwargs.get('token')
 
             if endpoint is None:
                 e = kwargs['api_endpoint']
             else:
                 e = endpoint
 
-            r = requests.request(method, e, params=params, headers=headers)
-            result = func(*args, r.status_code, r.json())
+            r = requests.request(method, e, params=params_dict, headers=headers)
+            # If you face problems in unit tests you can uncomment this line 
+            # to see the raw data
+            # print("--------------------Debugging Start--------------------")
+            # print(logging_hook(r))
+            # print("--------------------Debugging End----------------------")
+            try:
+                result = func(*args, r.status_code, r.json())
+            except ValueError: # When response body is empty / no json, then return None
+                result = func(*args, r.status_code, None)
             return result
 
         return wrapper
@@ -138,7 +186,11 @@ def create_client(client_id, **kwargs):
                           'publicClient': False,
                           'enabled': True
                       })
-
+    # If you face problems in unit tests you can uncomment this line 
+    # to see the raw data
+    # print("--------------------Debugging Start--------------------")
+    # print(logging_hook(r))
+    # print("--------------------Debugging End----------------------")
     assert r.status_code == 201
 
     r = requests.post(KC_HOST + "/admin/realms/master/clients/" + id + '/roles',

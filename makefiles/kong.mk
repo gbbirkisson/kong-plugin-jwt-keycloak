@@ -2,14 +2,14 @@ KONG_CONTAINER_NAME:=kong
 KONG_PORT:=8000
 KONG_ADMIN_PORT:=8001
 
-KONG_DB_CONTAINER_NAME:=kongdb
+KONG_DB_CONTAINER_NAME:=kong_test_postgres
 KONG_DB_PORT:=5432
 KONG_DB_USER:=kong
 KONG_DB_PASS:=kong
 KONG_DB_NAME:=kong
 KONG_DATABASE?=postgres
 
-POSTGRES_IMAGE:=postgres:11.2-alpine
+POSTGRES_IMAGE:=docker.io/postgres:11.2-alpine
 
 wait-for-log:
 	@while ! docker logs ${CONTAINER} | grep -q "${PATTERN}"; do sleep 5; done
@@ -48,7 +48,7 @@ kong-db-stop:
 
 kong-start: build
 	@echo "Creating kong..."
-	@docker run -d --rm \
+	@docker run -d \
 		--name ${KONG_CONTAINER_NAME} \
 		--net=host \
         -e "KONG_LOG_LEVEL=debug" \
@@ -62,20 +62,28 @@ kong-start: build
 		-e "KONG_PG_PASSWORD=${KONG_DB_PASS}" \
 		-e "KONG_PG_DATABASE=${KONG_DB_NAME}" \
 		-e "KONG_ADMIN_LISTEN=0.0.0.0:8001" \
+		-e "KONG_NGINX_WORKER_PROCESSES"="1" \
         ${FULL_IMAGE_NAME} kong start --vv
 
 kong-stop:
 	@echo "Removing Kong..."
 	- @docker stop ${KONG_CONTAINER_NAME}
+	- @docker rm ${KONG_CONTAINER_NAME}
 
-kong-log:
+kong-restart: kong-stop kong-db-stop kong-db-start kong-start
+	- @docker logs ${KONG_CONTAINER_NAME}
+
+kong-logs:
 	- @docker logs -f ${KONG_CONTAINER_NAME}
 
-kong-err-proxy:
+kong-logs-proxy:
+	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 proxy_access.log
+
+kong-logs-admin:
+	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 admin_access.log
+
+kong-logs-proxy-err:
 	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 /proxy_error.log
 
-kong-err-admin:
+kong-logs-admin-err:
 	- @docker exec -it ${KONG_CONTAINER_NAME} tail -f -n 100 /admin_error.log
-
-kong-restart: kong-stop kong-db-stop kong-create
-	- @docker logs ${KONG_CONTAINER_NAME}
